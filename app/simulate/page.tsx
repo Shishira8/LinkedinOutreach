@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ExternalLink, Loader2 } from 'lucide-react';
 import { useSimulationAuth } from '@/hooks/use-simulation-auth';
+import { LinkedInTrendsPanel } from './linkedin-trends-panel';
+import type { EngagementSeriesPoint, PerformanceInsight, TopPost } from '@/lib/linkedin-analytics';
 
 const LINKEDIN_ANALYTICS_URL = 'https://www.linkedin.com/analytics/creator/audience/?timeRange=past_90_days';
 
@@ -22,6 +24,9 @@ type AnalyticsImportResponse = {
     file_name: string;
     created_at: string;
     audience_profile_json: AudienceProfile;
+    engagement_series_json: EngagementSeriesPoint[];
+    top_posts_json: TopPost[];
+    performance_insights_json: PerformanceInsight[];
   } | null;
 };
 
@@ -35,9 +40,13 @@ export default function SimulatePage() {
   const [isSimulating, setIsSimulating] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [analyticsProfile, setAnalyticsProfile] = useState<AudienceProfile | null>(null);
+  const [engagementSeries, setEngagementSeries] = useState<EngagementSeriesPoint[]>([]);
+  const [topPosts, setTopPosts] = useState<TopPost[]>([]);
+  const [performanceInsights, setPerformanceInsights] = useState<PerformanceInsight[]>([]);
   const [analyticsFileName, setAnalyticsFileName] = useState<string | null>(null);
   const [analyticsImportedAt, setAnalyticsImportedAt] = useState<string | null>(null);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+  const [analyticsLoadNotice, setAnalyticsLoadNotice] = useState<string | null>(null);
   const [isUploadingAnalytics, setIsUploadingAnalytics] = useState(false);
   const router = useRouter();
 
@@ -68,10 +77,13 @@ export default function SimulatePage() {
         }
 
         setAnalyticsProfile(payload.import.audience_profile_json);
+        setEngagementSeries(payload.import.engagement_series_json || []);
+        setTopPosts(payload.import.top_posts_json || []);
+        setPerformanceInsights(payload.import.performance_insights_json || []);
         setAnalyticsFileName(payload.import.file_name);
         setAnalyticsImportedAt(payload.import.created_at);
       } catch (error: any) {
-        setAnalyticsError(error.message || 'Failed to load your latest LinkedIn audience import.');
+        setAnalyticsLoadNotice(error.message || 'Failed to load your latest LinkedIn audience import.');
       }
     };
 
@@ -103,8 +115,12 @@ export default function SimulatePage() {
       }
 
       setAnalyticsProfile(payload.import.audience_profile_json);
+      setEngagementSeries(payload.import.engagement_series_json || []);
+      setTopPosts(payload.import.top_posts_json || []);
+      setPerformanceInsights(payload.import.performance_insights_json || []);
       setAnalyticsFileName(payload.import.file_name);
       setAnalyticsImportedAt(payload.import.created_at);
+      setAnalyticsLoadNotice(null);
       setSelectedFile(null);
     } catch (error: any) {
       setAnalyticsError(error.message || 'Failed to upload LinkedIn analytics.');
@@ -216,6 +232,12 @@ export default function SimulatePage() {
                 </div>
               ) : null}
 
+              {analyticsLoadNotice ? (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                  {analyticsLoadNotice}
+                </div>
+              ) : null}
+
               {analyticsProfile ? (
                 <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5">
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -249,6 +271,14 @@ export default function SimulatePage() {
                     </div>
                   </div>
                 </div>
+              ) : null}
+
+              {analyticsProfile ? (
+                <LinkedInTrendsPanel
+                  engagementSeries={engagementSeries}
+                  topPosts={topPosts}
+                  insights={performanceInsights}
+                />
               ) : null}
             </div>
           </div>

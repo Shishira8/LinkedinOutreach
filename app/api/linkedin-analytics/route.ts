@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getServiceSupabase } from '@/lib/supabase';
-import { extractAudienceProfile } from '@/lib/linkedin-analytics';
+import { extractLinkedInAnalytics } from '@/lib/linkedin-analytics';
 
 export async function GET() {
   try {
@@ -14,7 +14,7 @@ export async function GET() {
     const supabase = getServiceSupabase();
     const { data, error } = await supabase
       .from('linkedin_audience_imports')
-      .select('id, file_name, file_type, audience_profile_json, created_at')
+      .select('id, file_name, file_type, audience_profile_json, engagement_series_json, top_posts_json, performance_insights_json, created_at')
       .eq('clerk_user_id', userId)
       .order('created_at', { ascending: false })
       .limit(1)
@@ -50,7 +50,8 @@ export async function POST(req: Request) {
     const fileName = file.name || 'linkedin-audience-export';
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
-    const audienceProfile = extractAudienceProfile(fileBuffer, fileName);
+    const analyticsSnapshot = extractLinkedInAnalytics(fileBuffer, fileName);
+    const audienceProfile = analyticsSnapshot.audienceProfile;
 
     const supabase = getServiceSupabase();
     const { data, error } = await supabase
@@ -62,8 +63,11 @@ export async function POST(req: Request) {
         row_count: audienceProfile.total_rows,
         raw_columns: audienceProfile.raw_columns,
         audience_profile_json: audienceProfile,
+        engagement_series_json: analyticsSnapshot.engagementSeries,
+        top_posts_json: analyticsSnapshot.topPosts,
+        performance_insights_json: analyticsSnapshot.performanceInsights,
       })
-      .select('id, file_name, file_type, audience_profile_json, created_at')
+      .select('id, file_name, file_type, audience_profile_json, engagement_series_json, top_posts_json, performance_insights_json, created_at')
       .single();
 
     if (error) {

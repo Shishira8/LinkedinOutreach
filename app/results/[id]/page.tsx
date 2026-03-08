@@ -2,10 +2,46 @@
 
 import { useEffect, useState, use } from 'react';
 import Link from 'next/link';
-import { Loader2, ArrowLeft } from 'lucide-react';
+import { Loader2, ArrowLeft, AlertTriangle, CheckCircle2, PencilLine } from 'lucide-react';
 import { useSimulationAuth } from '@/hooks/use-simulation-auth';
 import { useRouter } from 'next/navigation';
 import { normalizeAudienceAggregates } from '@/lib/scoring';
+
+type CoachingShape = {
+  whats_working_summary?: string;
+  whats_working?: string[] | string;
+  whats_losing_them_summary?: string;
+  whats_losing_them?: string[] | string;
+  edits_to_add?: string[] | string;
+  suggested_fix?: string[] | string;
+};
+
+function formatAudienceLabel(audience: string) {
+  return audience.replace(/_/g, ' ');
+}
+
+function toBulletList(value: string[] | string | undefined, limit = 4) {
+  if (!value) {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    return value
+      .map(item => item.trim())
+      .filter(Boolean)
+      .slice(0, limit);
+  }
+
+  return value
+    .split(/\n|(?<=[.!?])\s+(?=[A-Z])|;\s+/)
+    .map(item => item.replace(/^[-•\s]+/, '').trim())
+    .filter(Boolean)
+    .slice(0, limit);
+}
+
+function coachingForAudience(aggregate: any): CoachingShape {
+  return aggregate?.coaching || {};
+}
 
 export default function ResultsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -109,20 +145,6 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
   Object.keys(reactions_json).forEach(aud => audienceSet.add(aud));
   const audiences = Array.from(audienceSet);
 
-  const getInitials = (name: string) => {
-    return name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-  };
-
-  const getToneColor = (tone: string) => {
-    switch (tone?.toLowerCase()) {
-      case 'positive': return 'border-emerald-500 bg-emerald-50 text-emerald-700';
-      case 'neutral': return 'border-amber-500 bg-amber-50 text-amber-700';
-      case 'negative':
-      case 'skeptical': return 'border-red-500 bg-red-50 text-red-700';
-      default: return 'border-slate-300 bg-slate-50 text-slate-700';
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24">
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center border-b border-slate-200">
@@ -194,92 +216,110 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
           })}
         </div>
 
-        {/* SECTION 2 - Reply Threads */}
-        <h2 className="text-2xl font-bold tracking-tight mb-6">Simulated Reactions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {audiences.map(aud => {
-            const reactions = reactions_json[aud] || [];
-            return (
-              <div key={aud} className="space-y-4">
-                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
-                  {aud.replace('_', ' ')}
-                </h3>
-                {reactions.map((r: any, i: number) => {
-                  const toneClass = getToneColor(r.reaction.tone);
-                  return (
-                    <div key={i} className={`bg-white rounded-xl shadow-sm border-l-4 ${toneClass.split(' ')[0]} border-y border-r border-slate-200 p-4`}>
-                      <div className="flex items-start gap-3 mb-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center font-bold text-sm shrink-0">
-                          {getInitials(r.persona.name)}
-                        </div>
-                        <div>
-                          <div className="text-sm font-bold text-slate-900">{r.persona.name}</div>
-                          <div className="text-xs text-slate-500 line-clamp-1">{r.persona.role}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="text-xs font-semibold uppercase tracking-wider mb-2 opacity-70">
-                        {r.reaction.action === 'scroll_past' ? 'Scrolled Past' : r.reaction.action}
-                      </div>
-                      
-                      {r.reaction.comment && (
-                        <p className="text-sm text-slate-700 mb-3">&quot;{r.reaction.comment}&quot;</p>
-                      )}
-                      
-                      <div className="text-xs italic text-slate-500 bg-slate-50 p-2 rounded">
-                        💭 &quot;{r.reaction.almost_changed_mind_because}&quot;
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            );
-          })}
-        </div>
-
-        {/* SECTION 3 - Coaching Panel */}
-        <h2 className="text-2xl font-bold tracking-tight mb-6">Coaching & Analysis</h2>
+        {/* SECTION 2 - Coaching Panel */}
+        <h2 className="text-2xl font-bold tracking-tight mb-2">What To Change In The Draft</h2>
+        <p className="text-sm text-slate-500 mb-6 max-w-3xl">
+          Each card highlights what to keep, what to cut, and the exact lines or additions to test in your next draft.
+        </p>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {audiences.map(aud => {
             const agg = aggregate_json[aud];
             if (!agg || !agg.coaching) return null;
+            const coaching = coachingForAudience(agg);
+            const keepList = toBulletList(coaching.whats_working || agg.coaching.whats_working, 3);
+            const loseList = toBulletList(coaching.whats_losing_them || agg.coaching.whats_losing_them, 3);
+            const editList = toBulletList(coaching.edits_to_add || coaching.suggested_fix || agg.coaching.suggested_fix, 5);
+            const suggestedFix = toBulletList(coaching.suggested_fix, 1)[0];
+            const whatsWorkingSummary = coaching.whats_working_summary || toBulletList(agg.coaching.whats_working, 1)[0];
+            const whatsLosingSummary = coaching.whats_losing_them_summary || toBulletList(agg.coaching.whats_losing_them, 1)[0];
             return (
-              <div key={aud} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-6">
-                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
-                  {aud.replace('_', ' ')}
-                </h3>
-                
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-emerald-500">✅</span>
-                    <h4 className="font-semibold text-slate-800">What&apos;s working</h4>
-                  </div>
-                  <p className="text-sm text-slate-600">{agg.coaching.whats_working || 'N/A'}</p>
+              <div key={aud} className="bg-white rounded-3xl shadow-sm border border-slate-200 p-6 space-y-5">
+                <div className="flex items-center justify-between gap-4">
+                  <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+                    {formatAudienceLabel(aud)}
+                  </h3>
+                  {suggestedFix ? (
+                    <span className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                      {suggestedFix}
+                    </span>
+                  ) : null}
                 </div>
 
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-amber-500">⚠️</span>
-                    <h4 className="font-semibold text-slate-800">What&apos;s losing them</h4>
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">What&apos;s working</div>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                      {whatsWorkingSummary || 'This audience sees a few strong signals, but nothing distinct enough to summarize yet.'}
+                    </p>
                   </div>
-                  <p className="text-sm text-slate-600">{agg.coaching.whats_losing_them || 'N/A'}</p>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">What&apos;s not working</div>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                      {whatsLosingSummary || 'There is no clear drop-off pattern yet for this audience.'}
+                    </p>
+                  </div>
                 </div>
 
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-blue-500">✏️</span>
-                    <h4 className="font-semibold text-slate-800">Suggested fix</h4>
+                <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+                  <div className="flex items-center gap-2 mb-3">
+                    <PencilLine className="h-4 w-4 text-blue-600" />
+                    <h4 className="font-semibold text-slate-900">Add these to the draft</h4>
                   </div>
-                  <p className="text-sm text-slate-600">{agg.coaching.suggested_fix || 'N/A'}</p>
+                  <ul className="space-y-2 text-sm text-slate-700">
+                    {editList.length > 0 ? editList.map(item => (
+                      <li key={item} className="flex gap-2">
+                        <span className="mt-1 h-1.5 w-1.5 rounded-full bg-blue-600" />
+                        <span>{item}</span>
+                      </li>
+                    )) : (
+                      <li className="text-slate-500">No concrete draft edits were generated.</li>
+                    )}
+                  </ul>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4">
+                  <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                      <h4 className="font-semibold text-slate-900">Keep</h4>
+                    </div>
+                    <ul className="space-y-2 text-sm text-slate-700">
+                      {keepList.length > 0 ? keepList.map(item => (
+                        <li key={item} className="flex gap-2">
+                          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-600" />
+                          <span>{item}</span>
+                        </li>
+                      )) : (
+                        <li className="text-slate-500">No standout strengths detected.</li>
+                      )}
+                    </ul>
+                  </div>
+
+                  <div className="rounded-2xl border border-amber-100 bg-amber-50/70 p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <AlertTriangle className="h-4 w-4 text-amber-600" />
+                      <h4 className="font-semibold text-slate-900">Trim or clarify</h4>
+                    </div>
+                    <ul className="space-y-2 text-sm text-slate-700">
+                      {loseList.length > 0 ? loseList.map(item => (
+                        <li key={item} className="flex gap-2">
+                          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-amber-600" />
+                          <span>{item}</span>
+                        </li>
+                      )) : (
+                        <li className="text-slate-500">No major drop-off risk detected.</li>
+                      )}
+                    </ul>
+                  </div>
                 </div>
 
                 {agg.dangerous_reply && (
-                  <div className="p-4 bg-red-50 rounded-xl border border-red-100">
+                  <div className="p-4 bg-red-50 rounded-2xl border border-red-100">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-red-500">☠️</span>
-                      <h4 className="font-semibold text-red-800 text-sm">Dangerous Reply</h4>
+                      <AlertTriangle className="h-4 w-4 text-red-500" />
+                      <h4 className="font-semibold text-red-800 text-sm">Risky reaction this draft could trigger</h4>
                     </div>
-                    <p className="text-xs text-red-700 italic">&quot;{agg.dangerous_reply}&quot;</p>
+                    <p className="text-sm text-red-700 italic">&quot;{agg.dangerous_reply}&quot;</p>
                   </div>
                 )}
               </div>

@@ -91,7 +91,19 @@ Return a JSON object where keys are the audience group names (e.g., "hiring_mana
 - would_comment_pct: percentage (0-100)
 - top_themes: array of 2-3 strings
 - dangerous_reply: A specific comment that could hurt the user's reputation (if any, otherwise empty)
-- coaching: object with "whats_working", "whats_losing_them", "suggested_fix"
+- coaching: object with:
+  - whats_working_summary: one short sentence under 22 words
+  - whats_working: array of 2-3 short bullets, each under 14 words
+  - whats_losing_them_summary: one short sentence under 22 words
+  - whats_losing_them: array of 2-3 short bullets, each under 14 words
+  - edits_to_add: array of 3-5 concrete changes the user can directly add to the draft, each starting with an action verb like "Add", "Quantify", "Name", "Show", "End with"
+  - suggested_fix: one sentence under 24 words summarizing the highest-leverage revision
+
+Rules:
+- Be specific to the actual post content. Refer to details that are already in the draft.
+- Do not give generic advice like "be more engaging" or "add more detail".
+- Every edit must describe something concrete the user can insert, sharpen, quantify, or cut.
+- Prefer short, skimmable phrases over paragraphs.
 `;
 
   try {

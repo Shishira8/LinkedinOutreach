@@ -73,6 +73,9 @@ CREATE TABLE public.linkedin_audience_imports (
   row_count INTEGER DEFAULT 0,
   raw_columns TEXT[] NOT NULL DEFAULT '{}',
   audience_profile_json JSONB NOT NULL,
+  engagement_series_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+  top_posts_json JSONB NOT NULL DEFAULT '[]'::jsonb,
+  performance_insights_json JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
