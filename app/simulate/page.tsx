@@ -154,6 +154,11 @@ export default function SimulatePage() {
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       <header className="w-full max-w-4xl mx-auto px-6 py-6 flex justify-between items-center">
         <Link href="/" className="text-xl font-bold text-[#0A66C2] tracking-tight">ReplyMind</Link>
+        {isSignedIn ? (
+          <Link href="/dashboard" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+            Dashboard
+          </Link>
+        ) : null}
       </header>
 
       <main className="w-full max-w-4xl mx-auto px-6 pt-8 pb-24">

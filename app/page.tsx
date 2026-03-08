@@ -5,7 +5,10 @@ export default function Home() {
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center">
         <div className="text-2xl font-bold text-[#0A66C2] tracking-tight">ReplyMind</div>
-        <nav>
+        <nav className="flex items-center gap-6">
+          <Link href="/dashboard" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+            Dashboard
+          </Link>
           <Link href="/simulate" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
             Try Simulator
           </Link>

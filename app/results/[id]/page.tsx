@@ -149,9 +149,16 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24">
       <header className="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center border-b border-slate-200">
         <Link href="/" className="text-xl font-bold text-[#0A66C2] tracking-tight">ReplyMind</Link>
-        <Link href="/simulate" className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
-          <ArrowLeft className="w-4 h-4" /> New Simulation
-        </Link>
+        <div className="flex items-center gap-5">
+          {isSignedIn ? (
+            <Link href="/dashboard" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+              Dashboard
+            </Link>
+          ) : null}
+          <Link href="/simulate" className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+            <ArrowLeft className="w-4 h-4" /> New Simulation
+          </Link>
+        </div>
       </header>
 
       <main className="w-full max-w-7xl mx-auto px-6 pt-8">
