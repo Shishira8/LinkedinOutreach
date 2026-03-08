@@ -2,11 +2,11 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# ReplyMind
 
-This contains everything you need to run your app locally.
+This repository contains the ReplyMind app and everything needed to run it locally.
 
-View your app in AI Studio: https://ai.studio/apps/dc41c57e-0af2-4184-80ad-635d10d51b7d
+ReplyMind simulates how different LinkedIn audiences may react to a draft post before you publish it.
 
 ## Run Locally
 
