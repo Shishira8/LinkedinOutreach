@@ -1,0 +1,336 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ExternalLink, Loader2 } from 'lucide-react';
+import { useSimulationAuth } from '@/hooks/use-simulation-auth';
+
+const LINKEDIN_ANALYTICS_URL = 'https://www.linkedin.com/analytics/creator/audience/?timeRange=past_90_days';
+
+type AudienceProfile = {
+  summary: string;
+  top_industries: Array<{ label: string; weight: number }>;
+  top_job_functions: Array<{ label: string; weight: number }>;
+  top_seniority: Array<{ label: string; weight: number }>;
+  audience_biases: string[];
+};
+
+type AnalyticsImportResponse = {
+  import: {
+    id: string;
+    file_name: string;
+    created_at: string;
+    audience_profile_json: AudienceProfile;
+  } | null;
+};
+
+export default function SimulatePage() {
+  const [postText, setPostText] = useState('');
+  const [audiences, setAudiences] = useState({
+    hiring_managers: true,
+    peers: true,
+    domain_experts: true,
+  });
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [analyticsProfile, setAnalyticsProfile] = useState<AudienceProfile | null>(null);
+  const [analyticsFileName, setAnalyticsFileName] = useState<string | null>(null);
+  const [analyticsImportedAt, setAnalyticsImportedAt] = useState<string | null>(null);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+  const [isUploadingAnalytics, setIsUploadingAnalytics] = useState(false);
+  const router = useRouter();
+
+  const handleAudienceChange = (key: keyof typeof audiences) => {
+    setAudiences(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const hasSelectedAudience = Object.values(audiences).some(v => v);
+  const isValid = postText.trim().length > 0 && hasSelectedAudience;
+
+  const { isLoaded, isSignedIn } = useSimulationAuth();
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) {
+      return;
+    }
+
+    const loadLatestAnalyticsImport = async () => {
+      try {
+        const response = await fetch('/api/linkedin-analytics');
+        if (!response.ok) {
+          throw new Error('Failed to load your latest LinkedIn audience import.');
+        }
+
+        const payload: AnalyticsImportResponse = await response.json();
+        if (!payload.import) {
+          return;
+        }
+
+        setAnalyticsProfile(payload.import.audience_profile_json);
+        setAnalyticsFileName(payload.import.file_name);
+        setAnalyticsImportedAt(payload.import.created_at);
+      } catch (error: any) {
+        setAnalyticsError(error.message || 'Failed to load your latest LinkedIn audience import.');
+      }
+    };
+
+    loadLatestAnalyticsImport();
+  }, [isLoaded, isSignedIn]);
+
+  const handleAnalyticsUpload = async () => {
+    if (!selectedFile) {
+      setAnalyticsError('Choose your exported LinkedIn analytics file first.');
+      return;
+    }
+
+    setAnalyticsError(null);
+    setIsUploadingAnalytics(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await fetch('/api/linkedin-analytics', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload?.error || 'Failed to upload LinkedIn analytics.');
+      }
+
+      setAnalyticsProfile(payload.import.audience_profile_json);
+      setAnalyticsFileName(payload.import.file_name);
+      setAnalyticsImportedAt(payload.import.created_at);
+      setSelectedFile(null);
+    } catch (error: any) {
+      setAnalyticsError(error.message || 'Failed to upload LinkedIn analytics.');
+    } finally {
+      setIsUploadingAnalytics(false);
+    }
+  };
+
+  const handleSimulate = async () => {
+    if (!isValid) return;
+    
+    setIsSimulating(true);
+    
+    // Store data in sessionStorage to pass to loading screen
+    const selectedAudiences = Object.entries(audiences)
+      .filter(([_, isSelected]) => isSelected)
+      .map(([key]) => key);
+      
+    sessionStorage.setItem('simulationData', JSON.stringify({
+      post_text: postText,
+      selected_audiences: selectedAudiences,
+      platform: 'linkedin',
+    }));
+
+    router.push('/simulate/loading');
+  };
+
+  const formatTopLabels = (entries: Array<{ label: string }> = []) => entries.map(entry => entry.label).join(', ');
+
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+      <header className="w-full max-w-4xl mx-auto px-6 py-6 flex justify-between items-center">
+        <Link href="/" className="text-xl font-bold text-[#0A66C2] tracking-tight">ReplyMind</Link>
+      </header>
+
+      <main className="w-full max-w-4xl mx-auto px-6 pt-8 pb-24">
+        <h1 className="text-3xl font-bold tracking-tight mb-2">New Simulation</h1>
+        <p className="text-slate-500 mb-8">Paste your draft and select who you want to test it with.</p>
+
+        <div className="space-y-8">
+          <div className="bg-gradient-to-br from-blue-50 via-white to-cyan-50 rounded-2xl shadow-sm border border-blue-100 p-6">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="max-w-2xl">
+                <div className="text-sm font-bold text-blue-700 uppercase tracking-wider mb-2">LinkedIn Audience Import</div>
+                <h2 className="text-xl font-bold tracking-tight text-slate-900 mb-2">Download your LinkedIn audience analytics</h2>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Open your LinkedIn creator analytics, then click <span className="font-semibold text-slate-900">Export</span> on that page to download your audience analytics file. We&apos;ll use that file next to personalize persona generation.
+                </p>
+                <p className="text-xs text-slate-500 mt-3">
+                  Anonymous demo access is limited. Sign in when you want persistent history and more simulations.
+                </p>
+              </div>
+              <a
+                href={LINKEDIN_ANALYTICS_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#0A66C2] text-white rounded-full font-semibold hover:bg-[#004182] transition-colors shadow-lg shadow-blue-500/20"
+              >
+                Open LinkedIn Analytics
+                <ExternalLink className="w-4 h-4" />
+              </a>
+            </div>
+
+            <div className="mt-6 border-t border-blue-100 pt-6 space-y-4">
+              {isSignedIn ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-semibold text-slate-700 mb-2">Upload exported analytics file</label>
+                    <input
+                      type="file"
+                      accept=".csv,.xlsx,.xls,.xlsm,.xlsb,.xlxs,.json"
+                      onChange={(event) => setSelectedFile(event.target.files?.[0] || null)}
+                      className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-full file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-slate-700"
+                    />
+                    <p className="text-xs text-slate-500 mt-2">
+                      Supported formats: CSV and spreadsheet exports (.xlsx, .xls, .xlsm, .xlsb, .xlxs). We detect content server-side, so odd LinkedIn extensions are still accepted.
+                    </p>
+                  </div>
+
+                  <div className="flex flex-col gap-3 md:flex-row md:items-center">
+                    <button
+                      type="button"
+                      onClick={handleAnalyticsUpload}
+                      disabled={!selectedFile || isUploadingAnalytics}
+                      className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-slate-900 text-white rounded-full font-semibold hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isUploadingAnalytics ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                      {isUploadingAnalytics ? 'Uploading analytics...' : 'Upload Analytics File'}
+                    </button>
+                    {selectedFile ? (
+                      <span className="text-sm text-slate-600">Selected: {selectedFile.name}</span>
+                    ) : null}
+                  </div>
+                </>
+              ) : (
+                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                  Sign in to upload your LinkedIn audience export and generate personalized persona packs.
+                  <div className="mt-3">
+                    <Link href="/sign-in?redirect_url=/simulate" className="font-semibold text-amber-900 underline underline-offset-4">
+                      Sign in to personalize simulations
+                    </Link>
+                  </div>
+                </div>
+              )}
+
+              {analyticsError ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                  {analyticsError}
+                </div>
+              ) : null}
+
+              {analyticsProfile ? (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <div className="text-sm font-bold text-emerald-700 uppercase tracking-wider">Audience profile ready</div>
+                      <h3 className="text-lg font-bold text-slate-900 mt-1">Personalized persona pack will be used in your next simulation</h3>
+                      <p className="text-sm text-slate-700 mt-2">{analyticsProfile.summary}</p>
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {analyticsFileName ? <div>File: {analyticsFileName}</div> : null}
+                      {analyticsImportedAt ? <div>Imported: {new Date(analyticsImportedAt).toLocaleString()}</div> : null}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5 text-sm">
+                    <div>
+                      <div className="font-semibold text-slate-800">Top industries</div>
+                      <div className="text-slate-600 mt-1">{formatTopLabels(analyticsProfile.top_industries) || 'Not detected'}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-800">Top job functions</div>
+                      <div className="text-slate-600 mt-1">{formatTopLabels(analyticsProfile.top_job_functions) || 'Not detected'}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-800">Top seniority</div>
+                      <div className="text-slate-600 mt-1">{formatTopLabels(analyticsProfile.top_seniority) || 'Not detected'}</div>
+                    </div>
+                    <div>
+                      <div className="font-semibold text-slate-800">Audience biases</div>
+                      <div className="text-slate-600 mt-1">{analyticsProfile.audience_biases.join(', ') || 'Not detected'}</div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          {/* Text Area */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <label className="block text-sm font-semibold text-slate-700 mb-2">LinkedIn Post Draft</label>
+            <textarea
+              className="w-full h-64 p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none transition-all"
+              placeholder="Paste your LinkedIn post draft here..."
+              value={postText}
+              onChange={(e) => setPostText(e.target.value)}
+              maxLength={3000}
+            />
+            <div className="flex justify-end mt-2 text-xs text-slate-400 font-medium">
+              {postText.length} / 3000
+            </div>
+          </div>
+
+          {/* Audiences */}
+          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+            <label className="block text-sm font-semibold text-slate-700 mb-4">Select Audiences</label>
+            <div className="space-y-3">
+              <label className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-transparent hover:border-slate-100">
+                <input 
+                  type="checkbox" 
+                  className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  checked={audiences.hiring_managers}
+                  onChange={() => handleAudienceChange('hiring_managers')}
+                />
+                <div>
+                  <div className="font-semibold text-slate-800">Hiring Managers (Tech)</div>
+                  <div className="text-sm text-slate-500">How recruiters and EMs evaluate your post</div>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-transparent hover:border-slate-100">
+                <input 
+                  type="checkbox" 
+                  className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  checked={audiences.peers}
+                  onChange={() => handleAudienceChange('peers')}
+                />
+                <div>
+                  <div className="font-semibold text-slate-800">Peers</div>
+                  <div className="text-sm text-slate-500">How fellow engineers and professionals see you</div>
+                </div>
+              </label>
+
+              <label className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-transparent hover:border-slate-100">
+                <input 
+                  type="checkbox" 
+                  className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  checked={audiences.domain_experts}
+                  onChange={() => handleAudienceChange('domain_experts')}
+                />
+                <div>
+                  <div className="font-semibold text-slate-800">Domain Experts</div>
+                  <div className="text-sm text-slate-500">How senior leaders and influencers react</div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              onClick={handleSimulate}
+              disabled={!isValid || isSimulating}
+              className="px-8 py-4 bg-[#0A66C2] text-white rounded-full font-semibold text-lg hover:bg-[#004182] transition-colors shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            >
+              {isSimulating ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  Preparing...
+                </>
+              ) : (
+                'Simulate Reactions →'
+              )}
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}

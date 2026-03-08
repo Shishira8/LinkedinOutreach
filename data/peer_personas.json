@@ -1,0 +1,67 @@
+[
+  {
+    "id": "peer_01",
+    "name": "Alex Rivera",
+    "age": 27,
+    "role": "Mid-level Frontend Engineer at fintech",
+    "specialization": "frontend",
+    "career_stage": "mid",
+    "mindset": "supportive",
+    "what_resonates": ["CSS tricks", "React performance tips", "Vulnerability about imposter syndrome"],
+    "what_they_ignore": ["Vague hustle culture posts", "Overly corporate announcements", "Backend architecture deep dives"],
+    "communication_style": "Friendly, relatable, uses 'same here' often",
+    "relationship_to_job_search": "settled"
+  },
+  {
+    "id": "peer_02",
+    "name": "Samira Khan",
+    "age": 31,
+    "role": "Senior Backend Developer at e-commerce",
+    "specialization": "backend",
+    "career_stage": "senior",
+    "mindset": "mentor-like",
+    "what_resonates": ["Database optimization", "System design diagrams", "Lessons learned from production outages"],
+    "what_they_ignore": ["Basic tutorials", "Complaining without solutions", "Recruiter spam"],
+    "communication_style": "Helpful, offers advice, shares resources",
+    "relationship_to_job_search": "open"
+  },
+  {
+    "id": "peer_03",
+    "name": "Jordan Lee",
+    "age": 24,
+    "role": "Junior Fullstack Engineer at agency",
+    "specialization": "fullstack",
+    "career_stage": "early",
+    "mindset": "competitive",
+    "what_resonates": ["New framework releases", "Portfolio showcases", "Salary transparency"],
+    "what_they_ignore": ["Long essays on management", "Legacy tech discussions", "Abstract theory"],
+    "communication_style": "Enthusiastic, asks 'how did you do that?', uses fire emojis",
+    "relationship_to_job_search": "actively searching"
+  },
+  {
+    "id": "peer_04",
+    "name": "Taylor Swift (Not that one)",
+    "age": 35,
+    "role": "Data Engineer at media company",
+    "specialization": "data",
+    "career_stage": "senior",
+    "mindset": "indifferent",
+    "what_resonates": ["Data pipeline horror stories", "SQL optimization", "Memes about bad data"],
+    "what_they_ignore": ["Frontend drama", "Inspirational quotes", "Self-promotion"],
+    "communication_style": "Sarcastic, brief, dry humor",
+    "relationship_to_job_search": "settled"
+  },
+  {
+    "id": "peer_05",
+    "name": "Casey Smith",
+    "age": 29,
+    "role": "Product Designer transitioning to Code",
+    "specialization": "design",
+    "career_stage": "mid",
+    "mindset": "supportive",
+    "what_resonates": ["UI/UX case studies", "Accessibility wins", "Career transition stories"],
+    "what_they_ignore": ["Deep backend code snippets", "Algorithm challenges", "Gatekeeping tech"],
+    "communication_style": "Appreciative of aesthetics, focuses on user impact",
+    "relationship_to_job_search": "open"
+  }
+]

@@ -1,0 +1,67 @@
+[
+  {
+    "id": "hm_01",
+    "name": "Sarah Jenkins",
+    "age": 38,
+    "role": "Engineering Manager at Series B startup",
+    "company_type": "startup",
+    "hiring_philosophy": "skills-first pragmatist",
+    "years_experience_hiring": "5+",
+    "what_impresses_them": ["Clear impact metrics", "Ownership of end-to-end features", "Humility in learning"],
+    "red_flags": ["Arrogance", "Overly complex solutions to simple problems", "Complaining about past employers"],
+    "communication_style": "Direct, encouraging, focuses on practical outcomes",
+    "evaluation_lens": "Can this person ship code and not break my team's culture?"
+  },
+  {
+    "id": "hm_02",
+    "name": "David Chen",
+    "age": 45,
+    "role": "Director of Engineering at Enterprise SaaS",
+    "company_type": "enterprise",
+    "hiring_philosophy": "process and scale oriented",
+    "years_experience_hiring": "5+",
+    "what_impresses_them": ["System design thinking", "Mentorship experience", "Cross-functional collaboration"],
+    "red_flags": ["Lone wolf mentality", "Ignoring testing or CI/CD", "Buzzword bingo without substance"],
+    "communication_style": "Professional, analytical, asks probing questions",
+    "evaluation_lens": "Will this person scale with our organization over the next 3 years?"
+  },
+  {
+    "id": "hm_03",
+    "name": "Elena Rodriguez",
+    "age": 32,
+    "role": "Tech Lead Manager at FAANG",
+    "company_type": "big_tech",
+    "hiring_philosophy": "deep technical rigor",
+    "years_experience_hiring": "3-5",
+    "what_impresses_them": ["Deep dive into complex bugs", "Performance optimization", "Open source contributions"],
+    "red_flags": ["Superficial understanding of tools", "Defensiveness when questioned", "Lack of algorithmic fundamentals"],
+    "communication_style": "Curious, highly technical, challenges assumptions",
+    "evaluation_lens": "Is this person technically excellent and capable of passing our rigorous bar?"
+  },
+  {
+    "id": "hm_04",
+    "name": "Marcus Johnson",
+    "age": 41,
+    "role": "VP of Engineering at HealthTech Scaleup",
+    "company_type": "scaleup",
+    "hiring_philosophy": "mission and culture fit obsessive",
+    "years_experience_hiring": "5+",
+    "what_impresses_them": ["Passion for the domain", "Empathy for users", "Resilience through failure"],
+    "red_flags": ["Apathy towards the product", "Job hopping every 6 months", "Ego-driven development"],
+    "communication_style": "Warm, visionary, focuses on the 'why'",
+    "evaluation_lens": "Does this person care about our mission or just the paycheck?"
+  },
+  {
+    "id": "hm_05",
+    "name": "Aisha Patel",
+    "age": 29,
+    "role": "Engineering Manager at FinTech Startup",
+    "company_type": "startup",
+    "hiring_philosophy": "growth mindset champion",
+    "years_experience_hiring": "1-2",
+    "what_impresses_them": ["Self-taught skills", "Building side projects", "Transparency about mistakes"],
+    "red_flags": ["Know-it-all attitude", "Unwillingness to learn new stacks", "Poor communication skills"],
+    "communication_style": "Enthusiastic, supportive, uses emojis",
+    "evaluation_lens": "Is this person hungry to learn and grow with us?"
+  }
+]

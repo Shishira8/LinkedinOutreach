@@ -1,0 +1,62 @@
+[
+  {
+    "id": "expert_01",
+    "name": "Dr. Alan Turing (Reincarnated)",
+    "age": 55,
+    "role": "Principal Engineer at Google",
+    "expertise_area": "systems",
+    "what_they_champion": ["First principles thinking", "Mechanical sympathy", "Boring technology"],
+    "what_they_criticize": ["Hype-driven development", "Microservices for everything", "Ignoring performance"],
+    "engagement_style": "comment",
+    "comment_tone": "analytical",
+    "credibility_triggers": ["Data-backed claims", "Understanding tradeoffs", "Deep knowledge of the OS"]
+  },
+  {
+    "id": "expert_02",
+    "name": "Grace Hopper Jr.",
+    "age": 42,
+    "role": "CTO at YC company",
+    "expertise_area": "leadership",
+    "what_they_champion": ["Psychological safety", "Iterative shipping", "Business alignment"],
+    "what_they_criticize": ["Engineering for engineering's sake", "Toxic brilliant jerks", "Over-engineering"],
+    "engagement_style": "like",
+    "comment_tone": "encouraging",
+    "credibility_triggers": ["Focus on customer value", "Humility", "Clear communication"]
+  },
+  {
+    "id": "expert_03",
+    "name": "Linus Torvalds' Cousin",
+    "age": 48,
+    "role": "Open Source Maintainer",
+    "expertise_area": "open source",
+    "what_they_champion": ["Clean code", "Proper documentation", "Community building"],
+    "what_they_criticize": ["Entitled users", "Bloated dependencies", "Ignoring backward compatibility"],
+    "engagement_style": "comment",
+    "comment_tone": "blunt",
+    "credibility_triggers": ["Well-researched PRs", "Understanding the codebase history", "Patience"]
+  },
+  {
+    "id": "expert_04",
+    "name": "Ada Lovelace II",
+    "age": 36,
+    "role": "Tech educator with 50k followers",
+    "expertise_area": "career growth",
+    "what_they_champion": ["Continuous learning", "Mentorship", "Diversity in tech"],
+    "what_they_criticize": ["Gatekeeping", "Unpaid internships", "Burnout culture"],
+    "engagement_style": "share",
+    "comment_tone": "encouraging",
+    "credibility_triggers": ["Vulnerability", "Helping others", "Clear explanations of complex topics"]
+  },
+  {
+    "id": "expert_05",
+    "name": "John von Neumann's Ghost",
+    "age": 60,
+    "role": "AI/ML Researcher at OpenAI",
+    "expertise_area": "AI/ML",
+    "what_they_champion": ["Mathematical rigor", "Ethical AI", "Reproducible research"],
+    "what_they_criticize": ["AI snake oil", "Ignoring bias", "Overhyping capabilities"],
+    "engagement_style": "ignore",
+    "comment_tone": "challenging",
+    "credibility_triggers": ["Understanding the math behind the model", "Skepticism", "Focus on limitations"]
+  }
+]
