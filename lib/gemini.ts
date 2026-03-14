@@ -46,6 +46,96 @@ async function callGemini(prompt: string, responseJson = true): Promise<string> 
   throw lastError || new Error('Max retries reached');
 }
 
+function normalizeTextForCompare(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function isRewriteMissingOrUnchanged(original: string, rewrite: unknown) {
+  if (typeof rewrite !== 'string' || !rewrite.trim()) {
+    return true;
+  }
+
+  const normalizedOriginal = normalizeTextForCompare(original);
+  const normalizedRewrite = normalizeTextForCompare(rewrite);
+
+  return normalizedOriginal === normalizedRewrite;
+}
+
+function audienceRewriteDirection(audience: string) {
+  if (audience === 'hiring_managers') {
+    return 'Emphasize business outcomes, team leverage, leadership judgment, and practical execution clarity.';
+  }
+
+  if (audience === 'domain_experts') {
+    return 'Emphasize technical nuance, trade-offs, edge cases, and non-obvious insights for experienced practitioners.';
+  }
+
+  return 'Emphasize relatable practical tactics, concrete examples, and immediately usable advice for peers.';
+}
+
+function isTooSimilarToExisting(candidate: string, existing: string[]) {
+  const normalizedCandidate = normalizeTextForCompare(candidate);
+  return existing.some(item => normalizeTextForCompare(item) === normalizedCandidate);
+}
+
+async function generateAudienceRewrite(
+  audience: string,
+  postText: string,
+  audienceAnalysis: any,
+  existingRewrites: string[] = [],
+) {
+  const direction = audienceRewriteDirection(audience);
+  const priorRewriteHint = existingRewrites.length > 0
+    ? `Avoid writing a near-duplicate of these existing rewrites:\n${existingRewrites.map((item, index) => `${index + 1}. ${item}`).join('\n')}`
+    : '';
+
+  const prompt = `
+You are a LinkedIn writing coach.
+
+Audience: ${audience}
+Original post:
+"""
+${postText}
+"""
+
+Audience analysis:
+${JSON.stringify(audienceAnalysis || {}, null, 2)}
+
+Task:
+- Rewrite the post for this audience.
+- Keep the same core idea, but improve hook, specificity, and practical value.
+- Make it clearly different from the original wording.
+- Make the angle distinct for this audience: ${direction}
+- Keep the final length between 80% and 130% of original length.
+- Return plain text only. No JSON. No code fences.
+${priorRewriteHint}
+`;
+
+  try {
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const rewritten = await callGemini(prompt, false);
+      const cleaned = rewritten.trim().replace(/^"|"$/g, '');
+
+      if (!cleaned || isRewriteMissingOrUnchanged(postText, cleaned)) {
+        continue;
+      }
+
+      if (isTooSimilarToExisting(cleaned, existingRewrites)) {
+        continue;
+      }
+
+      return cleaned;
+    }
+
+    return postText;
+  } catch {
+    return postText;
+  }
+}
+
 export async function generateReaction(persona: any, postText: string, platform: string) {
   const prompt = `
 You are simulating a LinkedIn user reading a post.
@@ -98,17 +188,53 @@ Return a JSON object where keys are the audience group names (e.g., "hiring_mana
   - whats_losing_them: array of 2-3 short bullets, each under 14 words
   - edits_to_add: array of 3-5 concrete changes the user can directly add to the draft, each starting with an action verb like "Add", "Quantify", "Name", "Show", "End with"
   - suggested_fix: one sentence under 24 words summarizing the highest-leverage revision
+  - rewritten_post: one polished rewrite of the original post that already applies the suggested edits
 
 Rules:
 - Be specific to the actual post content. Refer to details that are already in the draft.
 - Do not give generic advice like "be more engaging" or "add more detail".
 - Every edit must describe something concrete the user can insert, sharpen, quantify, or cut.
 - Prefer short, skimmable phrases over paragraphs.
+- For rewritten_post, keep the voice authentic to the original but strengthen the opening hook and specificity.
+- For rewritten_post, target roughly 80-130% of the original post length and keep it LinkedIn-ready.
 `;
 
   try {
     const text = await callGemini(prompt);
-    return JSON.parse(text);
+    const parsed = JSON.parse(text);
+
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return {};
+    }
+
+    const acceptedRewrites: string[] = [];
+
+    for (const audience of Object.keys(parsed)) {
+      if (!parsed[audience] || typeof parsed[audience] !== 'object') {
+        continue;
+      }
+
+      const coaching = parsed[audience].coaching;
+      if (!coaching || typeof coaching !== 'object') {
+        parsed[audience].coaching = {};
+      }
+
+      const currentRewrite = parsed[audience].coaching.rewritten_post;
+      let finalRewrite = typeof currentRewrite === 'string' ? currentRewrite.trim() : '';
+
+      const needsRegeneration =
+        isRewriteMissingOrUnchanged(postText, finalRewrite) ||
+        isTooSimilarToExisting(finalRewrite, acceptedRewrites);
+
+      if (needsRegeneration) {
+        finalRewrite = await generateAudienceRewrite(audience, postText, parsed[audience], acceptedRewrites);
+      }
+
+      parsed[audience].coaching.rewritten_post = finalRewrite || postText;
+      acceptedRewrites.push(parsed[audience].coaching.rewritten_post);
+    }
+
+    return parsed;
   } catch (e) {
     console.error("Error in aggregateReactions", e);
     return {};

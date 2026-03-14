@@ -205,13 +205,13 @@ export async function POST(req: Request) {
 
           await Promise.all(promises);
 
-          sendEvent('progress', { message: 'Analyzing patterns...', step: 3 });
+          sendEvent('progress', { message: 'Rewriting your post for each audience...', step: 3 });
 
           // Aggregate reactions
           const llmAggregate = await aggregateReactions(reactionsByAudience, post_text);
           const aggregate = normalizeAudienceAggregates(reactionsByAudience, llmAggregate);
 
-          sendEvent('progress', { message: 'Writing your coaching report...', step: 4 });
+          sendEvent('progress', { message: 'Finalizing your coaching report...', step: 4 });
 
           // Save results
           const { error: resultError } = await supabase.from('simulation_results').insert({
@@ -228,7 +228,7 @@ export async function POST(req: Request) {
           // Update simulation status
           await supabase.from('simulations').update({ status: 'complete' }).eq('id', simulationId);
 
-          sendEvent('complete', { id: simulationId, reactions: reactionsByAudience, aggregate });
+          sendEvent('complete', { id: simulationId, personas: personasByAudience, reactions: reactionsByAudience, aggregate });
           controller.close();
         } catch (err) {
           console.error('Stream error:', err);

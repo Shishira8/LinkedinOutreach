@@ -8,8 +8,8 @@ export default function LoadingPage() {
   const [steps, setSteps] = useState([
     { id: 1, text: 'Generating your audience personas...', status: 'pending' },
     { id: 2, text: 'Simulating hiring manager reactions...', status: 'pending' },
-    { id: 3, text: 'Analyzing patterns...', status: 'pending' },
-    { id: 4, text: 'Writing your coaching report...', status: 'pending' },
+    { id: 3, text: 'Rewriting your post for each audience...', status: 'pending' },
+    { id: 4, text: 'Finalizing your coaching report...', status: 'pending' },
   ]);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
