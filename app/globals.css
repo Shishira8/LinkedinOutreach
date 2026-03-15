@@ -1,1 +1,97 @@
 @import "tailwindcss";
+
+:root {
+	--defi-bg: #030304;
+	--defi-surface: #0f1115;
+	--defi-fg: #ffffff;
+	--defi-muted: #94a3b8;
+	--defi-border: #1e293b;
+	--defi-primary: #f7931a;
+	--defi-secondary: #ea580c;
+	--defi-gold: #ffd600;
+}
+
+html,
+body {
+	min-height: 100%;
+}
+
+body {
+	background: var(--defi-bg);
+	color: var(--defi-fg);
+}
+
+@layer base {
+	.font-heading {
+		font-family: var(--font-space-grotesk), sans-serif;
+	}
+
+	.font-body {
+		font-family: var(--font-inter), sans-serif;
+	}
+
+	.font-mono {
+		font-family: var(--font-jetbrains-mono), monospace;
+	}
+}
+
+@layer utilities {
+	.defi-page {
+		@apply min-h-screen text-white;
+		font-family: var(--font-inter), sans-serif;
+		background:
+			radial-gradient(circle at 20% 0%, rgba(247, 147, 26, 0.11), transparent 35%),
+			radial-gradient(circle at 80% 10%, rgba(255, 214, 0, 0.08), transparent 42%),
+			var(--defi-bg);
+	}
+
+	.defi-container {
+		width: min(1400px, 100%);
+		margin-inline: auto;
+		padding-inline: clamp(1rem, 2.4vw, 2.5rem);
+	}
+
+	.defi-nav {
+		@apply border-b border-white/10 backdrop-blur-md;
+		background: rgba(3, 3, 4, 0.84);
+	}
+
+	.defi-logo {
+		font-family: var(--font-space-grotesk), sans-serif;
+		font-weight: 700;
+		letter-spacing: -0.02em;
+		color: var(--defi-primary);
+		text-shadow: 0 0 16px rgba(247, 147, 26, 0.45);
+	}
+
+	.defi-muted {
+		color: var(--defi-muted);
+	}
+
+	.defi-link {
+		color: var(--defi-primary);
+	}
+
+	.defi-link:hover {
+		color: var(--defi-gold);
+	}
+
+	.defi-gradient-text {
+		background: linear-gradient(to right, var(--defi-primary), var(--defi-gold));
+		-webkit-background-clip: text;
+		background-clip: text;
+		color: transparent;
+	}
+
+	.bg-grid-pattern {
+		background-size: 50px 50px;
+		background-image:
+			linear-gradient(to right, rgba(30, 41, 59, 0.5) 1px, transparent 1px),
+			linear-gradient(to bottom, rgba(30, 41, 59, 0.5) 1px, transparent 1px);
+		mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+	}
+
+	.defi-focus {
+		@apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#F7931A] focus-visible:ring-offset-0;
+	}
+}

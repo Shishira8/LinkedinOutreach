@@ -7,6 +7,10 @@ import { ExternalLink, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { useSimulationAuth } from '@/hooks/use-simulation-auth';
 import { LinkedInTrendsPanel } from './linkedin-trends-panel';
 import type { EngagementSeriesPoint, PerformanceInsight, TopPost } from '@/lib/linkedin-analytics';
+import { DefiPanel } from '@/components/ui/defi/panel';
+import { DefiBadge } from '@/components/ui/defi/badge';
+import { DefiInput } from '@/components/ui/defi/input';
+import { defiButtonVariants } from '@/components/ui/defi/button';
 
 const LINKEDIN_ANALYTICS_URL = 'https://www.linkedin.com/analytics/creator/audience/?timeRange=past_90_days';
 
@@ -152,39 +156,41 @@ export default function SimulatePage() {
   const formatTopLabels = (entries: Array<{ label: string }> = []) => entries.map(entry => entry.label).join(', ');
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
-      <header className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-6 flex justify-between items-center">
-        <Link href="/" className="text-xl font-bold text-[#0A66C2] tracking-tight">ReplyMind</Link>
+    <div className="defi-page">
+      <header className="defi-nav">
+        <div className="defi-container py-6 flex justify-between items-center">
+        <Link href="/" className="text-xl defi-logo">ReplyMind</Link>
         {isSignedIn ? (
-          <Link href="/dashboard" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+          <Link href="/dashboard" className="text-sm font-medium uppercase tracking-wider defi-link">
             Dashboard
           </Link>
         ) : null}
+        </div>
       </header>
 
-      <main className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 pb-24">
-        <h1 className="text-3xl font-bold tracking-tight mb-2">New Simulation</h1>
-        <p className="text-slate-500 mb-8">Paste your draft and select who you want to test it with.</p>
+      <main className="defi-container pt-8 pb-24">
+        <h1 className="text-3xl font-heading font-bold tracking-tight mb-2">New Simulation</h1>
+        <p className="text-[#94A3B8] mb-8">Paste your draft and select who you want to test it with.</p>
 
         <div className="space-y-8">
-          <div className="bg-gradient-to-br from-blue-50 via-white to-cyan-50 rounded-2xl shadow-sm border border-blue-100 p-6">
+          <DefiPanel variant="surface" padding="md" className="rounded-2xl">
             <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="max-w-2xl">
-                <div className="text-sm font-bold text-blue-700 uppercase tracking-wider mb-1">Optional Personalization</div>
-                <h2 className="text-lg font-bold tracking-tight text-slate-900">LinkedIn Audience Import</h2>
-                <p className="text-sm text-slate-600 leading-relaxed mt-1">
+                <DefiBadge variant="orange" className="mb-2">Optional personalization</DefiBadge>
+                <h2 className="text-lg font-heading font-bold tracking-tight text-white">LinkedIn Audience Import</h2>
+                <p className="text-sm text-[#94A3B8] leading-relaxed mt-1">
                   Skip this to simulate immediately, or connect your audience export to generate personalized personas.
                 </p>
                 {analyticsProfile ? (
-                  <p className="text-xs font-semibold text-emerald-700 mt-2">Audience profile connected and ready.</p>
+                  <p className="text-xs font-semibold text-emerald-400 mt-2">Audience profile connected and ready.</p>
                 ) : (
-                  <p className="text-xs text-slate-500 mt-2">No audience file connected yet.</p>
+                  <p className="text-xs text-[#94A3B8] mt-2">No audience file connected yet.</p>
                 )}
               </div>
               <button
                 type="button"
                 onClick={() => setShowOptionalImport(prev => !prev)}
-                className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-white text-slate-800 rounded-full font-semibold border border-slate-300 hover:bg-slate-50 transition-colors"
+                className={defiButtonVariants({ variant: 'outline' })}
               >
                 {showOptionalImport ? 'Hide import setup' : 'Set up personalization'}
                 {showOptionalImport ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -192,13 +198,13 @@ export default function SimulatePage() {
             </div>
 
             {showOptionalImport ? (
-              <div className="mt-6 border-t border-blue-100 pt-6 space-y-4">
+              <div className="mt-6 border-t border-white/10 pt-6 space-y-4">
                 <div className="flex justify-start">
                   <a
                     href={LINKEDIN_ANALYTICS_URL}
                     target="_blank"
                     rel="noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-[#0A66C2] text-white rounded-full font-semibold hover:bg-[#004182] transition-colors shadow-lg shadow-blue-500/20"
+                    className={defiButtonVariants({ size: 'md' })}
                   >
                     Open LinkedIn Analytics
                     <ExternalLink className="w-4 h-4" />
@@ -208,14 +214,14 @@ export default function SimulatePage() {
               {isSignedIn ? (
                 <>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-2">Upload exported analytics file</label>
-                    <input
+                    <label className="block text-sm font-semibold text-white mb-2">Upload exported analytics file</label>
+                    <DefiInput
                       type="file"
                       accept=".csv,.xlsx,.xls,.xlsm,.xlsb,.xlxs,.json"
                       onChange={(event) => setSelectedFile(event.target.files?.[0] || null)}
-                      className="block w-full text-sm text-slate-600 file:mr-4 file:rounded-full file:border-0 file:bg-slate-900 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-slate-700"
+                      className="block h-auto border border-white/20 file:mr-4 file:rounded-full file:border-0 file:bg-[#F7931A] file:px-4 file:py-2 file:text-xs file:font-semibold file:uppercase file:tracking-wider file:text-white hover:file:bg-[#EA580C]"
                     />
-                    <p className="text-xs text-slate-500 mt-2">
+                    <p className="text-xs text-[#94A3B8] mt-2">
                       Supported formats: CSV and spreadsheet exports (.xlsx, .xls, .xlsm, .xlsb, .xlxs). We detect content server-side, so odd LinkedIn extensions are still accepted.
                     </p>
                   </div>
@@ -225,21 +231,21 @@ export default function SimulatePage() {
                       type="button"
                       onClick={handleAnalyticsUpload}
                       disabled={!selectedFile || isUploadingAnalytics}
-                      className="inline-flex items-center justify-center gap-2 px-5 py-3 bg-slate-900 text-white rounded-full font-semibold hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className={defiButtonVariants()}
                     >
                       {isUploadingAnalytics ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                       {isUploadingAnalytics ? 'Uploading analytics...' : 'Upload Analytics File'}
                     </button>
                     {selectedFile ? (
-                      <span className="text-sm text-slate-600">Selected: {selectedFile.name}</span>
+                      <span className="text-sm text-[#94A3B8]">Selected: {selectedFile.name}</span>
                     ) : null}
                   </div>
                 </>
               ) : (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 p-4 text-sm text-amber-200">
                   Sign in to upload your LinkedIn audience export and generate personalized persona packs.
                   <div className="mt-3">
-                    <Link href="/sign-in?redirect_url=/simulate" className="font-semibold text-amber-900 underline underline-offset-4">
+                    <Link href="/sign-in?redirect_url=/simulate" className="font-semibold text-amber-300 underline underline-offset-4">
                       Sign in to personalize simulations
                     </Link>
                   </div>
@@ -247,26 +253,26 @@ export default function SimulatePage() {
               )}
 
               {analyticsError ? (
-                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                <div className="rounded-xl border border-red-400/40 bg-red-500/10 p-4 text-sm text-red-300">
                   {analyticsError}
                 </div>
               ) : null}
 
               {analyticsLoadNotice ? (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 p-4 text-sm text-amber-200">
                   {analyticsLoadNotice}
                 </div>
               ) : null}
 
               {analyticsProfile ? (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5">
+                <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-5">
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                     <div>
-                      <div className="text-sm font-bold text-emerald-700 uppercase tracking-wider">Audience profile ready</div>
-                      <h3 className="text-lg font-bold text-slate-900 mt-1">Personalized persona pack will be used in your next simulation</h3>
-                      <p className="text-sm text-slate-700 mt-2">{analyticsProfile.summary}</p>
+                      <div className="text-sm font-bold text-emerald-300 uppercase tracking-wider">Audience profile ready</div>
+                      <h3 className="text-lg font-bold text-white mt-1">Personalized persona pack will be used in your next simulation</h3>
+                      <p className="text-sm text-[#D1FAE5] mt-2">{analyticsProfile.summary}</p>
                     </div>
-                    <div className="text-xs text-slate-500">
+                    <div className="text-xs text-emerald-100/80">
                       {analyticsFileName ? <div>File: {analyticsFileName}</div> : null}
                       {analyticsImportedAt ? <div>Imported: {new Date(analyticsImportedAt).toLocaleString()}</div> : null}
                     </div>
@@ -274,20 +280,20 @@ export default function SimulatePage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5 text-sm">
                     <div>
-                      <div className="font-semibold text-slate-800">Top industries</div>
-                      <div className="text-slate-600 mt-1">{formatTopLabels(analyticsProfile.top_industries) || 'Not detected'}</div>
+                      <div className="font-semibold text-white">Top industries</div>
+                      <div className="text-emerald-100/85 mt-1">{formatTopLabels(analyticsProfile.top_industries) || 'Not detected'}</div>
                     </div>
                     <div>
-                      <div className="font-semibold text-slate-800">Top job functions</div>
-                      <div className="text-slate-600 mt-1">{formatTopLabels(analyticsProfile.top_job_functions) || 'Not detected'}</div>
+                      <div className="font-semibold text-white">Top job functions</div>
+                      <div className="text-emerald-100/85 mt-1">{formatTopLabels(analyticsProfile.top_job_functions) || 'Not detected'}</div>
                     </div>
                     <div>
-                      <div className="font-semibold text-slate-800">Top seniority</div>
-                      <div className="text-slate-600 mt-1">{formatTopLabels(analyticsProfile.top_seniority) || 'Not detected'}</div>
+                      <div className="font-semibold text-white">Top seniority</div>
+                      <div className="text-emerald-100/85 mt-1">{formatTopLabels(analyticsProfile.top_seniority) || 'Not detected'}</div>
                     </div>
                     <div>
-                      <div className="font-semibold text-slate-800">Audience biases</div>
-                      <div className="text-slate-600 mt-1">{analyticsProfile.audience_biases.join(', ') || 'Not detected'}</div>
+                      <div className="font-semibold text-white">Audience biases</div>
+                      <div className="text-emerald-100/85 mt-1">{analyticsProfile.audience_biases.join(', ') || 'Not detected'}</div>
                     </div>
                   </div>
                 </div>
@@ -302,75 +308,75 @@ export default function SimulatePage() {
               ) : null}
               </div>
             ) : null}
-          </div>
+          </DefiPanel>
 
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
             {/* Text Area */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 xl:col-span-2">
-              <label className="block text-sm font-semibold text-slate-700 mb-2">LinkedIn Post Draft</label>
+            <DefiPanel className="xl:col-span-2" variant="surface" padding="md">
+              <label className="block text-sm font-semibold text-white mb-2">LinkedIn Post Draft</label>
               <textarea
-                className="w-full h-72 p-4 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none transition-all"
+                className="w-full h-72 p-4 bg-black/40 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#F7931A] focus:border-[#F7931A] text-white outline-none resize-none transition-all placeholder:text-[#64748B]"
                 placeholder="Paste your LinkedIn post draft here..."
                 value={postText}
                 onChange={(e) => setPostText(e.target.value)}
                 maxLength={3000}
               />
-              <div className="flex justify-end mt-2 text-xs text-slate-400 font-medium">
+              <div className="flex justify-end mt-2 text-xs text-[#94A3B8] font-medium">
                 {postText.length} / 3000
               </div>
-            </div>
+            </DefiPanel>
 
             {/* Audiences */}
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 xl:col-span-1">
-              <label className="block text-sm font-semibold text-slate-700 mb-4">Select Audiences</label>
+            <DefiPanel className="xl:col-span-1" variant="surface" padding="md">
+              <label className="block text-sm font-semibold text-white mb-4">Select Audiences</label>
               <div className="space-y-3">
-                <label className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-transparent hover:border-slate-100">
+                <label className="flex items-start gap-3 p-3 rounded-xl hover:bg-white/5 cursor-pointer transition-colors border border-transparent hover:border-white/15">
                   <input 
                     type="checkbox" 
-                    className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="mt-1 w-5 h-5 rounded border-white/30 bg-black/40 text-[#F7931A] focus:ring-[#F7931A]"
                     checked={audiences.hiring_managers}
                     onChange={() => handleAudienceChange('hiring_managers')}
                   />
                   <div>
-                    <div className="font-semibold text-slate-800">Hiring Managers (Tech)</div>
-                    <div className="text-sm text-slate-500">How recruiters and EMs evaluate your post</div>
+                    <div className="font-semibold text-white">Hiring Managers (Tech)</div>
+                    <div className="text-sm text-[#94A3B8]">How recruiters and EMs evaluate your post</div>
                   </div>
                 </label>
 
-                <label className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-transparent hover:border-slate-100">
+                <label className="flex items-start gap-3 p-3 rounded-xl hover:bg-white/5 cursor-pointer transition-colors border border-transparent hover:border-white/15">
                   <input 
                     type="checkbox" 
-                    className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="mt-1 w-5 h-5 rounded border-white/30 bg-black/40 text-[#F7931A] focus:ring-[#F7931A]"
                     checked={audiences.peers}
                     onChange={() => handleAudienceChange('peers')}
                   />
                   <div>
-                    <div className="font-semibold text-slate-800">Peers</div>
-                    <div className="text-sm text-slate-500">How fellow engineers and professionals see you</div>
+                    <div className="font-semibold text-white">Peers</div>
+                    <div className="text-sm text-[#94A3B8]">How fellow engineers and professionals see you</div>
                   </div>
                 </label>
 
-                <label className="flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 cursor-pointer transition-colors border border-transparent hover:border-slate-100">
+                <label className="flex items-start gap-3 p-3 rounded-xl hover:bg-white/5 cursor-pointer transition-colors border border-transparent hover:border-white/15">
                   <input 
                     type="checkbox" 
-                    className="mt-1 w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                    className="mt-1 w-5 h-5 rounded border-white/30 bg-black/40 text-[#F7931A] focus:ring-[#F7931A]"
                     checked={audiences.domain_experts}
                     onChange={() => handleAudienceChange('domain_experts')}
                   />
                   <div>
-                    <div className="font-semibold text-slate-800">Domain Experts</div>
-                    <div className="text-sm text-slate-500">How senior leaders and influencers react</div>
+                    <div className="font-semibold text-white">Domain Experts</div>
+                    <div className="text-sm text-[#94A3B8]">How senior leaders and influencers react</div>
                   </div>
                 </label>
               </div>
-            </div>
+            </DefiPanel>
           </div>
 
           <div className="flex justify-stretch sm:justify-end">
             <button
               onClick={handleSimulate}
               disabled={!isValid || isSimulating}
-              className="w-full sm:w-auto px-8 py-4 bg-[#0A66C2] text-white rounded-full font-semibold text-lg hover:bg-[#004182] transition-colors shadow-lg shadow-blue-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className={`${defiButtonVariants({ size: 'lg' })} w-full sm:w-auto`}
             >
               {isSimulating ? (
                 <>

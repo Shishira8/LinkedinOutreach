@@ -8,6 +8,9 @@ import { normalizeAudienceAggregates } from '@/lib/scoring';
 import { LinkedInTrendsPanel } from '@/app/simulate/linkedin-trends-panel';
 import type { AudienceProfile, EngagementSeriesPoint, PerformanceInsight, TopPost } from '@/lib/linkedin-analytics';
 import { weeklyLinkedInSignals } from '@/data/linkedin_weekly_signals';
+import { defiButtonVariants } from '@/components/ui/defi/button';
+import { DefiPanel } from '@/components/ui/defi/panel';
+import { DefiBadge } from '@/components/ui/defi/badge';
 
 type AnalyticsImportResponse = {
   import: {
@@ -146,24 +149,22 @@ export default function DashboardPage() {
 
   if (!isLoaded || loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center text-slate-600">
-        <Loader2 className="h-8 w-8 animate-spin text-[#0A66C2]" />
+      <div className="defi-page flex items-center justify-center text-[#94A3B8]">
+        <Loader2 className="h-8 w-8 animate-spin text-[#F7931A]" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center px-6 text-center">
-        <div className="max-w-md rounded-3xl border border-red-200 bg-red-50 p-6">
-          <h1 className="text-xl font-semibold text-slate-900">Dashboard unavailable</h1>
-          <p className="mt-2 text-sm text-red-700">{error}</p>
+      <div className="defi-page flex flex-col items-center justify-center px-6 text-center">
+        <DefiPanel className="max-w-md" variant="glass" padding="md">
+          <h1 className="text-xl font-semibold font-heading">Dashboard unavailable</h1>
+          <p className="mt-2 text-sm text-[#fbbf24]">{error}</p>
           <div className="mt-5 flex justify-center gap-4">
-            <Link href="/simulate" className="rounded-full bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white hover:bg-[#004182] transition-colors">
-              Back to simulate
-            </Link>
+            <Link href="/simulate" className={defiButtonVariants({ size: 'md' })}>Back to simulate</Link>
           </div>
-        </div>
+        </DefiPanel>
       </div>
     );
   }
@@ -195,37 +196,39 @@ export default function DashboardPage() {
   const affinityBarMax = Math.max(...(dashboardSummary?.audience_affinity || []).map(item => item.average_engagement_score), 1);
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24">
-      <header className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-6 flex justify-between items-center border-b border-slate-200">
-        <Link href="/" className="text-xl font-bold text-[#0A66C2] tracking-tight">ReplyMind</Link>
-        <div className="flex items-center gap-5">
-          <Link href="/simulate" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+    <div className="defi-page pb-24">
+      <header className="defi-nav">
+        <div className="defi-container py-6 flex justify-between items-center">
+        <Link href="/" className="text-xl defi-logo">ReplyMind</Link>
+        <div className="flex items-center gap-5 font-mono">
+          <Link href="/simulate" className="text-sm font-medium defi-link uppercase tracking-wider">
             New simulation
           </Link>
         </div>
+        </div>
       </header>
 
-      <main className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 space-y-8">
-        <section className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-[#0A66C2] p-8 text-white shadow-xl">
+      <main className="defi-container pt-8 space-y-8">
+        <section className="rounded-2xl border border-white/10 bg-gradient-to-br from-[#08090f] via-[#111217] to-[#0f1115] p-8 text-white shadow-[0_0_40px_-10px_rgba(247,147,26,0.15)]">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-blue-100">
+              <DefiBadge variant="orange" className="gap-2">
                 <Sparkles className="h-3.5 w-3.5" /> Dashboard phase 1
-              </div>
-              <h1 className="mt-4 text-4xl font-bold tracking-tight">See what consistently works in your LinkedIn drafts.</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-200">
+              </DefiBadge>
+              <h1 className="mt-4 text-4xl font-heading font-bold tracking-tight">See what consistently works in your LinkedIn drafts.</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#cbd5e1]">
                 This view rolls up your saved coaching across runs so you can spot the audiences that respond best, the strengths that keep showing up, and the fixes worth applying next.
               </p>
             </div>
 
             <div className="flex flex-wrap gap-4">
-              <Link href="/simulate" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors">
+              <Link href="/simulate" className={defiButtonVariants()}>
                 Run another simulation <ArrowRight className="h-4 w-4" />
               </Link>
               <button
                 type="button"
                 onClick={() => setActiveView('trending')}
-                className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/20 transition-colors"
+                className="inline-flex items-center gap-2 rounded-full border-2 border-white/20 bg-transparent px-5 py-3 text-sm font-semibold uppercase tracking-wider text-white hover:border-[#F7931A] hover:text-[#F7931A] transition-all duration-300"
               >
                 View trending signals <Flame className="h-4 w-4" />
               </button>
@@ -236,13 +239,13 @@ export default function DashboardPage() {
             {summaryCards.map(card => {
               const Icon = card.icon;
               return (
-                <div key={card.title} className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <DefiPanel key={card.title} variant="glass" padding="sm" className="rounded-2xl">
                   <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-slate-300">
                     <Icon className="h-4 w-4" /> {card.title}
                   </div>
                   <div className="mt-3 text-2xl font-semibold leading-tight">{card.value}</div>
                   <p className="mt-2 text-sm leading-relaxed text-slate-300">{card.detail}</p>
-                </div>
+                </DefiPanel>
               );
             })}
 
@@ -264,15 +267,15 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+        <DefiPanel padding="sm">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
             <button
               type="button"
               onClick={() => setActiveView('overview')}
               className={`rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
                 activeView === 'overview'
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                  ? 'bg-gradient-to-r from-[#EA580C] to-[#F7931A] text-white shadow-[0_0_20px_-5px_rgba(234,88,12,0.45)]'
+                  : 'bg-[#0b0d12] text-[#94A3B8] border border-white/10 hover:text-[#F7931A] hover:border-[#F7931A]/50'
               }`}
             >
               Overview
@@ -282,8 +285,8 @@ export default function DashboardPage() {
               onClick={() => setActiveView('trending')}
               className={`rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
                 activeView === 'trending'
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                  ? 'bg-gradient-to-r from-[#EA580C] to-[#F7931A] text-white shadow-[0_0_20px_-5px_rgba(234,88,12,0.45)]'
+                  : 'bg-[#0b0d12] text-[#94A3B8] border border-white/10 hover:text-[#F7931A] hover:border-[#F7931A]/50'
               }`}
             >
               Trending on LinkedIn
@@ -293,26 +296,26 @@ export default function DashboardPage() {
               onClick={() => setActiveView('history')}
               className={`rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
                 activeView === 'history'
-                  ? 'bg-slate-900 text-white'
-                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+                  ? 'bg-gradient-to-r from-[#EA580C] to-[#F7931A] text-white shadow-[0_0_20px_-5px_rgba(234,88,12,0.45)]'
+                  : 'bg-[#0b0d12] text-[#94A3B8] border border-white/10 hover:text-[#F7931A] hover:border-[#F7931A]/50'
               }`}
             >
               Recent saved runs
             </button>
           </div>
-        </section>
+        </DefiPanel>
 
         {activeView === 'overview' ? (
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <DefiPanel className="rounded-3xl" variant="surface" padding="md">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900">Your cross-run patterns</h2>
-              <p className="mt-1 max-w-3xl text-sm text-slate-500">
+              <h2 className="text-2xl font-heading font-bold tracking-tight text-white">Your cross-run patterns</h2>
+              <p className="mt-1 max-w-3xl text-sm text-[#94A3B8]">
                 These analytics are derived from your saved simulations and the coaching attached to them, not from raw activity counts.
               </p>
             </div>
             {dashboardSummary?.sparse_data ? (
-              <div className="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-amber-700">
+              <div className="rounded-full border border-[#F59E0B]/40 bg-[#F59E0B]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#FBBF24]">
                 Add more saved runs for stronger patterns
               </div>
             ) : null}
@@ -320,42 +323,42 @@ export default function DashboardPage() {
 
           <div className="mt-6 grid grid-cols-1 gap-8 xl:grid-cols-[0.95fr_1.05fr]">
             <div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <Target className="h-4 w-4 text-blue-600" /> Audience affinity
+              <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                <Target className="h-4 w-4 text-[#F7931A]" /> Audience affinity
               </div>
               <div className="mt-4 space-y-4">
                 {(dashboardSummary?.audience_affinity || []).length > 0 ? dashboardSummary?.audience_affinity.map(item => (
-                  <div key={item.audience} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div key={item.audience} className="rounded-2xl border border-white/10 bg-[#0B0D12] p-4">
                     <div className="flex items-start justify-between gap-4">
                       <div>
-                        <h3 className="text-base font-semibold text-slate-900">{formatAudienceLabel(item.audience)}</h3>
-                        <p className="mt-1 text-sm text-slate-500">Strongest on {formatSignalLabel(item.strongest_signal)} across {item.run_count} completed runs.</p>
+                        <h3 className="text-base font-semibold text-white">{formatAudienceLabel(item.audience)}</h3>
+                        <p className="mt-1 text-sm text-[#94A3B8]">Strongest on {formatSignalLabel(item.strongest_signal)} across {item.run_count} completed runs.</p>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-semibold text-slate-900">{item.average_engagement_score}</div>
-                        <div className="text-xs uppercase tracking-wider text-slate-400">avg engagement</div>
+                        <div className="text-2xl font-semibold text-white">{item.average_engagement_score}</div>
+                        <div className="text-xs uppercase tracking-wider text-[#94A3B8]">avg engagement</div>
                       </div>
                     </div>
-                    <div className="mt-4 h-2 w-full rounded-full bg-slate-200">
-                      <div className="h-2 rounded-full bg-[#0A66C2]" style={{ width: `${(item.average_engagement_score / affinityBarMax) * 100}%` }} />
+                    <div className="mt-4 h-2 w-full rounded-full bg-white/10">
+                      <div className="h-2 rounded-full bg-gradient-to-r from-[#EA580C] to-[#F7931A]" style={{ width: `${(item.average_engagement_score / affinityBarMax) * 100}%` }} />
                     </div>
-                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-600 md:grid-cols-3">
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-[#94A3B8] md:grid-cols-3">
                       <div>
-                        <div className="text-xs uppercase tracking-wider text-slate-400">Attention</div>
-                        <div className="mt-1 font-semibold text-slate-900">{item.average_attention}%</div>
+                        <div className="text-xs uppercase tracking-wider text-[#64748B]">Attention</div>
+                        <div className="mt-1 font-semibold text-white">{item.average_attention}%</div>
                       </div>
                       <div>
-                        <div className="text-xs uppercase tracking-wider text-slate-400">Approval</div>
-                        <div className="mt-1 font-semibold text-slate-900">{item.average_approval}%</div>
+                        <div className="text-xs uppercase tracking-wider text-[#64748B]">Approval</div>
+                        <div className="mt-1 font-semibold text-white">{item.average_approval}%</div>
                       </div>
                       <div>
-                        <div className="text-xs uppercase tracking-wider text-slate-400">Conversation</div>
-                        <div className="mt-1 font-semibold text-slate-900">{item.average_conversation}%</div>
+                        <div className="text-xs uppercase tracking-wider text-[#64748B]">Conversation</div>
+                        <div className="mt-1 font-semibold text-white">{item.average_conversation}%</div>
                       </div>
                     </div>
                   </div>
                 )) : (
-                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-sm text-slate-500">
+                  <div className="rounded-2xl border border-dashed border-white/20 bg-[#0B0D12] p-6 text-sm text-[#94A3B8]">
                     Save at least a couple of completed simulations to see which audience consistently responds best.
                   </div>
                 )}
@@ -363,65 +366,65 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 gap-5">
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-5">
-                <div className="flex items-center gap-2 text-sm font-semibold text-emerald-900">
+              <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-emerald-300">
                   <TrendingUp className="h-4 w-4" /> What keeps working
                 </div>
                 <div className="mt-4 space-y-3">
                   {(dashboardSummary?.top_strengths || []).length > 0 ? dashboardSummary?.top_strengths.map(item => (
-                    <div key={item.label} className="rounded-xl border border-emerald-100 bg-white/70 p-3">
+                    <div key={item.label} className="rounded-xl border border-emerald-300/20 bg-[#0B0D12] p-3">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="text-sm font-medium text-slate-900">{item.label}</div>
-                        <div className="text-xs font-semibold uppercase tracking-wider text-emerald-700">{item.count}x</div>
+                        <div className="text-sm font-medium text-white">{item.label}</div>
+                        <div className="text-xs font-semibold uppercase tracking-wider text-emerald-300">{item.count}x</div>
                       </div>
-                      <div className="mt-2 text-xs text-slate-500">Seen with {item.audiences.map(formatAudienceLabel).join(', ')}</div>
+                      <div className="mt-2 text-xs text-[#94A3B8]">Seen with {item.audiences.map(formatAudienceLabel).join(', ')}</div>
                     </div>
                   )) : (
-                    <p className="text-sm text-slate-600">Your recurring strengths will appear here once enough coaching data accumulates.</p>
+                    <p className="text-sm text-[#94A3B8]">Your recurring strengths will appear here once enough coaching data accumulates.</p>
                   )}
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-amber-200 bg-amber-50/70 p-5">
-                <div className="flex items-center gap-2 text-sm font-semibold text-amber-900">
+              <div className="rounded-2xl border border-amber-300/30 bg-amber-500/10 p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-amber-300">
                   <TriangleAlert className="h-4 w-4" /> What keeps losing them
                 </div>
                 <div className="mt-4 space-y-3">
                   {(dashboardSummary?.top_weak_spots || []).length > 0 ? dashboardSummary?.top_weak_spots.map(item => (
-                    <div key={item.label} className="rounded-xl border border-amber-100 bg-white/70 p-3">
+                    <div key={item.label} className="rounded-xl border border-amber-300/20 bg-[#0B0D12] p-3">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="text-sm font-medium text-slate-900">{item.label}</div>
-                        <div className="text-xs font-semibold uppercase tracking-wider text-amber-700">{item.count}x</div>
+                        <div className="text-sm font-medium text-white">{item.label}</div>
+                        <div className="text-xs font-semibold uppercase tracking-wider text-amber-300">{item.count}x</div>
                       </div>
-                      <div className="mt-2 text-xs text-slate-500">Seen with {item.audiences.map(formatAudienceLabel).join(', ')}</div>
+                      <div className="mt-2 text-xs text-[#94A3B8]">Seen with {item.audiences.map(formatAudienceLabel).join(', ')}</div>
                     </div>
                   )) : (
-                    <p className="text-sm text-slate-600">Repeated weak spots will show up here once you save more completed runs.</p>
+                    <p className="text-sm text-[#94A3B8]">Repeated weak spots will show up here once you save more completed runs.</p>
                   )}
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
-                <div className="flex items-center gap-2 text-sm font-semibold text-blue-900">
+              <div className="rounded-2xl border border-[#F7931A]/30 bg-[#F7931A]/10 p-5">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[#FBBF24]">
                   <Wrench className="h-4 w-4" /> Draft fixes to apply next
                 </div>
                 <div className="mt-4 space-y-3">
                   {(dashboardSummary?.top_fixes || []).length > 0 ? dashboardSummary?.top_fixes.map(item => (
-                    <div key={item.label} className="rounded-xl border border-blue-100 bg-white/80 p-3">
+                    <div key={item.label} className="rounded-xl border border-[#F7931A]/20 bg-[#0B0D12] p-3">
                       <div className="flex items-start justify-between gap-3">
-                        <div className="text-sm font-medium text-slate-900">{item.label}</div>
-                        <div className="text-xs font-semibold uppercase tracking-wider text-blue-700">{item.count}x</div>
+                        <div className="text-sm font-medium text-white">{item.label}</div>
+                        <div className="text-xs font-semibold uppercase tracking-wider text-[#FBBF24]">{item.count}x</div>
                       </div>
-                      <div className="mt-2 text-xs text-slate-500">Recommended across {item.audiences.map(formatAudienceLabel).join(', ')}</div>
+                      <div className="mt-2 text-xs text-[#94A3B8]">Recommended across {item.audiences.map(formatAudienceLabel).join(', ')}</div>
                     </div>
                   )) : (
-                    <p className="text-sm text-slate-600">Frequent draft edits will appear here once your saved simulations start repeating patterns.</p>
+                    <p className="text-sm text-[#94A3B8]">Frequent draft edits will appear here once your saved simulations start repeating patterns.</p>
                   )}
                 </div>
               </div>
             </div>
           </div>
-          </section>
+          </DefiPanel>
         ) : null}
 
         {activeView === 'trending' ? (
@@ -432,48 +435,50 @@ export default function DashboardPage() {
               insights={analyticsImport.performance_insights_json || []}
             />
           ) : (
-            <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center shadow-sm">
-              <BarChart3 className="mx-auto h-8 w-8 text-slate-400" />
-              <h2 className="mt-4 text-xl font-semibold text-slate-900">Import your LinkedIn analytics to unlock trends</h2>
-              <p className="mt-2 text-sm text-slate-500">Your dashboard will show daily performance curves, top posts, and posting recommendations once you upload your creator export.</p>
-              <Link href="/simulate" className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white hover:bg-[#004182] transition-colors">
-                Upload analytics <ArrowRight className="h-4 w-4" />
-              </Link>
-            </section>
+            <DefiPanel className="rounded-3xl text-center" variant="subtle" padding="lg">
+              <BarChart3 className="mx-auto h-8 w-8 text-[#94A3B8]" />
+              <h2 className="mt-4 text-xl font-semibold font-heading text-white">Import your LinkedIn analytics to unlock trends</h2>
+              <p className="mt-2 text-sm text-[#94A3B8]">Your dashboard will show daily performance curves, top posts, and posting recommendations once you upload your creator export.</p>
+              <div className="mt-5">
+                <Link href="/simulate" className={defiButtonVariants()}>
+                  Upload analytics <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </DefiPanel>
           )
         ) : null}
 
         {activeView === 'trending' ? (
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <DefiPanel className="rounded-3xl" variant="surface" padding="md">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-orange-700">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[#F97316]/30 bg-[#F97316]/10 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[#FDBA74]">
                 <Megaphone className="h-3.5 w-3.5" /> Weekly LinkedIn signals
               </div>
-              <h2 className="mt-3 text-2xl font-bold tracking-tight text-slate-900">What is hot on LinkedIn this week</h2>
-              <p className="mt-1 max-w-3xl text-sm leading-relaxed text-slate-500">{weeklyLinkedInSignals.editor_note}</p>
+              <h2 className="mt-3 text-2xl font-heading font-bold tracking-tight text-white">What is hot on LinkedIn this week</h2>
+              <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[#94A3B8]">{weeklyLinkedInSignals.editor_note}</p>
             </div>
-            <div className="text-xs font-medium uppercase tracking-wider text-slate-400">{weeklyLinkedInSignals.week_label}</div>
+            <div className="text-xs font-medium uppercase tracking-wider text-[#64748B]">{weeklyLinkedInSignals.week_label}</div>
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-8 xl:grid-cols-[1.1fr_0.9fr]">
             <div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <Flame className="h-4 w-4 text-orange-500" /> Trending topics and angles
+              <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                <Flame className="h-4 w-4 text-[#F97316]" /> Trending topics and angles
               </div>
               <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-2">
                 {weeklyLinkedInSignals.topics.map(topic => (
-                  <div key={topic.name} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div key={topic.name} className="rounded-2xl border border-white/10 bg-[#0B0D12] p-4">
                     <div className="flex items-start justify-between gap-3">
-                      <h3 className="text-base font-semibold text-slate-900">{topic.name}</h3>
+                      <h3 className="text-base font-semibold text-white">{topic.name}</h3>
                       <span className={`rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider ${topic.momentum === 'surging' ? 'bg-red-50 text-red-700' : topic.momentum === 'rising' ? 'bg-amber-50 text-amber-700' : 'bg-slate-200 text-slate-700'}`}>
                         {topic.momentum}
                       </span>
                     </div>
-                    <p className="mt-3 text-sm leading-relaxed text-slate-600">{topic.why_it_is_hot}</p>
-                    <div className="mt-4 rounded-xl border border-blue-100 bg-blue-50 p-3">
-                      <div className="text-xs font-semibold uppercase tracking-wider text-blue-700">Angle to try</div>
-                      <p className="mt-1 text-sm text-slate-800">{topic.angle_to_try}</p>
+                    <p className="mt-3 text-sm leading-relaxed text-[#94A3B8]">{topic.why_it_is_hot}</p>
+                    <div className="mt-4 rounded-xl border border-[#F7931A]/30 bg-[#F7931A]/10 p-3">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-[#FBBF24]">Angle to try</div>
+                      <p className="mt-1 text-sm text-white">{topic.angle_to_try}</p>
                     </div>
                   </div>
                 ))}
@@ -481,32 +486,32 @@ export default function DashboardPage() {
             </div>
 
             <div>
-              <div className="flex items-center gap-2 text-sm font-semibold text-slate-900">
-                <Lightbulb className="h-4 w-4 text-blue-500" /> Generic reach tips
+              <div className="flex items-center gap-2 text-sm font-semibold text-white">
+                <Lightbulb className="h-4 w-4 text-[#F7931A]" /> Generic reach tips
               </div>
               <div className="mt-4 space-y-4">
                 {weeklyLinkedInSignals.reach_tips.map(tip => (
-                  <div key={tip.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <h3 className="text-base font-semibold text-slate-900">{tip.title}</h3>
-                    <p className="mt-2 text-sm font-medium text-slate-800">{tip.guidance}</p>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-500">{tip.why_it_helps}</p>
+                  <div key={tip.title} className="rounded-2xl border border-white/10 bg-[#0B0D12] p-4">
+                    <h3 className="text-base font-semibold text-white">{tip.title}</h3>
+                    <p className="mt-2 text-sm font-medium text-[#FBBF24]">{tip.guidance}</p>
+                    <p className="mt-2 text-sm leading-relaxed text-[#94A3B8]">{tip.why_it_helps}</p>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-          </section>
+          </DefiPanel>
         ) : null}
 
         {activeView === 'history' ? (
-          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+          <DefiPanel className="rounded-3xl" variant="surface" padding="md">
             <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
               <div>
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900">Recent saved runs</h2>
-                <p className="mt-1 text-sm text-slate-500">Keep this lightweight. Use it to jump back into the latest result pages when you need the full breakdown.</p>
+                <h2 className="text-2xl font-heading font-bold tracking-tight text-white">Recent saved runs</h2>
+                <p className="mt-1 text-sm text-[#94A3B8]">Keep this lightweight. Use it to jump back into the latest result pages when you need the full breakdown.</p>
               </div>
               {analyticsImport?.created_at ? (
-                <div className="text-xs text-slate-500">Latest audience import: {new Date(analyticsImport.created_at).toLocaleString()}</div>
+                <div className="text-xs text-[#94A3B8]">Latest audience import: {new Date(analyticsImport.created_at).toLocaleString()}</div>
               ) : null}
             </div>
 
@@ -518,37 +523,37 @@ export default function DashboardPage() {
                   <Link
                     key={simulation.id}
                     href={`/results/${simulation.id}`}
-                    className="group rounded-3xl border border-slate-200 bg-slate-50 p-5 transition-colors hover:border-slate-300 hover:bg-white"
+                    className="group rounded-3xl border border-white/10 bg-[#0B0D12] p-5 transition-colors hover:border-[#F7931A]/40"
                   >
                     <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wider text-slate-400">
+                        <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wider text-[#94A3B8]">
                           <span>{simulation.platform}</span>
                           <span>•</span>
                           <span>{new Date(simulation.created_at).toLocaleDateString()}</span>
                           <span>•</span>
-                          <span className={simulation.status === 'complete' ? 'text-emerald-600' : 'text-amber-600'}>{simulation.status}</span>
+                          <span className={simulation.status === 'complete' ? 'text-emerald-400' : 'text-amber-400'}>{simulation.status}</span>
                         </div>
-                        <p className="mt-3 text-sm leading-relaxed text-slate-700">{truncatePost(simulation.post_text)}</p>
+                        <p className="mt-3 text-sm leading-relaxed text-[#E2E8F0]">{truncatePost(simulation.post_text)}</p>
                         <div className="mt-4 flex flex-wrap gap-2">
                           {simulation.selected_audiences.map(audience => (
-                            <span key={audience} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 border border-slate-200">
+                            <span key={audience} className="rounded-full bg-black/40 px-3 py-1 text-xs font-semibold text-[#94A3B8] border border-white/15">
                               {formatAudienceLabel(audience)}
                             </span>
                           ))}
                         </div>
                       </div>
 
-                      <div className="flex min-w-[180px] flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+                      <div className="flex min-w-[180px] flex-col gap-3 rounded-2xl border border-white/10 bg-black/30 p-4">
                         <div>
-                          <div className="text-xs uppercase tracking-wider text-slate-400">Best audience in run</div>
-                          <div className="mt-1 text-sm font-semibold text-slate-900">{bestAudience ? formatAudienceLabel(bestAudience.audience) : 'No score yet'}</div>
+                          <div className="text-xs uppercase tracking-wider text-[#64748B]">Best audience in run</div>
+                          <div className="mt-1 text-sm font-semibold text-white">{bestAudience ? formatAudienceLabel(bestAudience.audience) : 'No score yet'}</div>
                         </div>
                         <div>
-                          <div className="text-xs uppercase tracking-wider text-slate-400">Top score in run</div>
-                          <div className="mt-1 text-2xl font-semibold text-slate-900">{bestAudience ? `${bestAudience.score}/100` : '—'}</div>
+                          <div className="text-xs uppercase tracking-wider text-[#64748B]">Top score in run</div>
+                          <div className="mt-1 text-2xl font-semibold text-white">{bestAudience ? `${bestAudience.score}/100` : '—'}</div>
                         </div>
-                        <div className="inline-flex items-center gap-2 text-sm font-medium text-[#0A66C2]">
+                        <div className="inline-flex items-center gap-2 text-sm font-medium text-[#F7931A]">
                           View full breakdown <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                         </div>
                       </div>
@@ -556,13 +561,13 @@ export default function DashboardPage() {
                   </Link>
                 );
               }) : (
-                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-slate-500 lg:col-span-2">
-                  <Clock3 className="mx-auto h-8 w-8 text-slate-400" />
+                <div className="rounded-3xl border border-dashed border-white/20 bg-[#0B0D12] p-8 text-center text-[#94A3B8] lg:col-span-2">
+                  <Clock3 className="mx-auto h-8 w-8 text-[#64748B]" />
                   <p className="mt-4 text-sm">You do not have any saved simulations yet. Save a few completed runs and this dashboard will start surfacing patterns that actually matter.</p>
                 </div>
               )}
             </div>
-          </section>
+          </DefiPanel>
         ) : null}
       </main>
     </div>

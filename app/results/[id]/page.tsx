@@ -6,6 +6,9 @@ import { Loader2, ArrowLeft, AlertTriangle, CheckCircle2, PencilLine, ChevronDow
 import { useSimulationAuth } from '@/hooks/use-simulation-auth';
 import { useRouter } from 'next/navigation';
 import { normalizeAudienceAggregates } from '@/lib/scoring';
+import { DefiPanel } from '@/components/ui/defi/panel';
+import { DefiBadge } from '@/components/ui/defi/badge';
+import { defiButtonVariants } from '@/components/ui/defi/button';
 
 type CoachingShape = {
   whats_working_summary?: string;
@@ -169,17 +172,19 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <Loader2 className="w-8 h-8 text-blue-500 animate-spin" />
+      <div className="defi-page flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#F7931A] animate-spin" />
       </div>
     );
   }
 
   if (error || !data) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
-        <div className="text-red-500 mb-4">{error || 'Results not found'}</div>
-        <Link href="/simulate" className="text-blue-500 hover:underline">Try again</Link>
+      <div className="defi-page flex flex-col items-center justify-center px-4">
+        <DefiPanel variant="glass" padding="md" className="text-center">
+          <div className="text-red-300 mb-4">{error || 'Results not found'}</div>
+          <Link href="/simulate" className="defi-link hover:underline">Try again</Link>
+        </DefiPanel>
       </div>
     );
   }
@@ -209,24 +214,26 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
     : 0;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24">
-      <header className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-6 flex justify-between items-center border-b border-slate-200">
-        <Link href="/" className="text-xl font-bold text-[#0A66C2] tracking-tight">ReplyMind</Link>
+    <div className="defi-page pb-24">
+      <header className="defi-nav">
+        <div className="defi-container py-6 flex justify-between items-center">
+        <Link href="/" className="text-xl defi-logo">ReplyMind</Link>
         <div className="flex items-center gap-5">
           {isSignedIn ? (
-            <Link href="/dashboard" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+            <Link href="/dashboard" className="text-sm font-medium uppercase tracking-wider defi-link">
               Dashboard
             </Link>
           ) : null}
-          <Link href="/simulate" className="flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
+          <Link href="/simulate" className="flex items-center gap-2 text-sm font-medium uppercase tracking-wider defi-link">
             <ArrowLeft className="w-4 h-4" /> New Simulation
           </Link>
         </div>
+        </div>
       </header>
 
-      <main className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 pt-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-8">Simulation Results</h1>
-        <p className="text-sm text-slate-500 mb-8 max-w-3xl">
+      <main className="defi-container pt-8">
+        <h1 className="text-3xl font-heading font-bold tracking-tight mb-8">Simulation Results</h1>
+        <p className="text-sm text-[#94A3B8] mb-8 max-w-3xl">
           Engagement scores are normalized from simulated attention, likes, and comments so you can compare future runs on the same scale.
         </p>
 
@@ -235,14 +242,14 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
           <button
             type="button"
             onClick={() => setShowPerformanceDetails(prev => !prev)}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className={defiButtonVariants({ variant: 'outline', size: 'sm' })}
           >
             {showPerformanceDetails ? 'Hide performance breakdown' : 'Show performance breakdown'}
             {showPerformanceDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </button>
           {!showPerformanceDetails && audiences.length > 0 ? (
-            <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4">
-              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Top audience snapshot</div>
+            <div className="mt-3 rounded-2xl border border-white/10 bg-[#0B0D12] p-4">
+              <div className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8] mb-2">Top audience snapshot</div>
               {(() => {
                 const rankedAudiences = [...audiences].sort(
                   (a, b) => (aggregate_json[b]?.engagement_score || 0) - (aggregate_json[a]?.engagement_score || 0),
@@ -254,15 +261,15 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
                 }
 
                 return (
-                  <div className="text-sm text-slate-700">
-                    <span className="font-semibold text-slate-900">{formatAudienceLabel(topAudience)}</span>
-                    <span className="mx-2 text-slate-400">•</span>
+                  <div className="text-sm text-[#CBD5E1]">
+                    <span className="font-semibold text-white">{formatAudienceLabel(topAudience)}</span>
+                    <span className="mx-2 text-[#64748B]">•</span>
                     <span>{topAgg.engagement_score || 0}/100</span>
-                    <span className="mx-2 text-slate-400">•</span>
+                    <span className="mx-2 text-[#64748B]">•</span>
                     <span>Stop: {topAgg.would_stop_scrolling_pct || 0}%</span>
-                    <span className="mx-2 text-slate-400">•</span>
+                    <span className="mx-2 text-[#64748B]">•</span>
                     <span>Like: {topAgg.would_like_pct || 0}%</span>
-                    <span className="mx-2 text-slate-400">•</span>
+                    <span className="mx-2 text-[#64748B]">•</span>
                     <span>Comment: {topAgg.would_comment_pct || 0}%</span>
                   </div>
                 );
@@ -275,40 +282,40 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
                 const agg = aggregate_json[aud];
                 if (!agg) return null;
                 return (
-                  <div key={aud} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
+                  <div key={aud} className="bg-[#0B0D12] rounded-2xl shadow-sm border border-white/10 p-6">
+                    <h3 className="text-sm font-bold text-[#94A3B8] uppercase tracking-wider mb-4">
                       {aud.replace('_', ' ')}
                     </h3>
-                    <div className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 mb-4">
+                    <div className="inline-flex items-center rounded-full border border-[#F7931A]/30 bg-[#F7931A]/10 px-3 py-1 text-xs font-semibold text-[#FBBF24] mb-4">
                       Normalized score
                     </div>
                     <div className="flex items-end gap-2 mb-6">
-                      <div className="text-5xl font-light text-slate-800">{agg.engagement_score || 0}</div>
-                      <div className="text-lg text-slate-400 mb-1">/100</div>
+                      <div className="text-5xl font-light text-white">{agg.engagement_score || 0}</div>
+                      <div className="text-lg text-[#94A3B8] mb-1">/100</div>
                     </div>
 
                     <div className="space-y-3">
                       <div className="flex justify-between items-center text-sm">
-                        <span className="text-slate-500">Stop Scrolling</span>
-                        <span className="font-semibold text-slate-700">{agg.would_stop_scrolling_pct || 0}%</span>
+                        <span className="text-[#94A3B8]">Stop Scrolling</span>
+                        <span className="font-semibold text-white">{agg.would_stop_scrolling_pct || 0}%</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-1.5">
-                        <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${agg.would_stop_scrolling_pct || 0}%` }}></div>
+                      <div className="w-full bg-white/10 rounded-full h-1.5">
+                        <div className="bg-[#F7931A] h-1.5 rounded-full" style={{ width: `${agg.would_stop_scrolling_pct || 0}%` }}></div>
                       </div>
 
                       <div className="flex justify-between items-center text-sm pt-2">
-                        <span className="text-slate-500">Would Like</span>
-                        <span className="font-semibold text-slate-700">{agg.would_like_pct || 0}%</span>
+                        <span className="text-[#94A3B8]">Would Like</span>
+                        <span className="font-semibold text-white">{agg.would_like_pct || 0}%</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-1.5">
+                      <div className="w-full bg-white/10 rounded-full h-1.5">
                         <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${agg.would_like_pct || 0}%` }}></div>
                       </div>
 
                       <div className="flex justify-between items-center text-sm pt-2">
-                        <span className="text-slate-500">Would Comment</span>
-                        <span className="font-semibold text-slate-700">{agg.would_comment_pct || 0}%</span>
+                        <span className="text-[#94A3B8]">Would Comment</span>
+                        <span className="font-semibold text-white">{agg.would_comment_pct || 0}%</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-1.5">
+                      <div className="w-full bg-white/10 rounded-full h-1.5">
                         <div className="bg-cyan-500 h-1.5 rounded-full" style={{ width: `${agg.would_comment_pct || 0}%` }}></div>
                       </div>
 
@@ -323,15 +330,15 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
         {/* SECTION 2 - Rewrite Studio */}
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight mb-2">Audience Rewrite Studio</h2>
-            <p className="text-sm text-slate-500 mb-2 max-w-3xl">
+            <h2 className="text-2xl font-heading font-bold tracking-tight mb-2">Audience Rewrite Studio</h2>
+            <p className="text-sm text-[#94A3B8] mb-2 max-w-3xl">
               View one audience at a time. The rewritten version below already incorporates draft upgrades so you can iterate faster.
             </p>
           </div>
           <button
             type="button"
             onClick={() => setShowMethodology(true)}
-            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className={defiButtonVariants({ variant: 'outline', size: 'sm' })}
           >
             <Info className="h-4 w-4" />
             How this simulation works
@@ -351,7 +358,7 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
                 className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
                   isActive
                     ? 'bg-slate-900 text-white'
-                    : 'bg-white text-slate-700 border border-slate-300 hover:border-slate-400 hover:bg-slate-50'
+                    : 'bg-black/30 text-[#94A3B8] border border-white/20 hover:border-[#F7931A] hover:text-[#F7931A]'
                 }`}
               >
                 {formatAudienceLabel(aud)}
@@ -362,27 +369,27 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
 
         {activeAggregate && activeCoaching ? (
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-6 mb-12">
-            <div className="lg:col-span-3 bg-white rounded-3xl shadow-sm border border-slate-200 p-6">
+            <DefiPanel className="lg:col-span-3 rounded-3xl" variant="surface" padding="md">
               <div className="flex items-center justify-between gap-4 mb-4">
-                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Rewritten post for {formatAudienceLabel(activeAudience || '')}</h3>
+                <h3 className="text-sm font-bold text-[#94A3B8] uppercase tracking-wider">Rewritten post for {formatAudienceLabel(activeAudience || '')}</h3>
                 {activeSuggestedFix ? (
-                  <span className="inline-flex items-center rounded-full bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-700">
+                  <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
                     {activeSuggestedFix}
                   </span>
                 ) : null}
               </div>
 
-              <div className="rounded-2xl border border-cyan-200 bg-gradient-to-br from-cyan-50 via-white to-sky-50 p-5">
-                <p className="text-sm leading-7 text-slate-800 whitespace-pre-wrap">
+              <div className="rounded-2xl border border-white/10 bg-black/35 p-5">
+                <p className="text-sm leading-7 text-[#E2E8F0] whitespace-pre-wrap">
                   {activeRewrite || 'A rewritten post is not available for this saved result. Expand detailed edits to apply the same upgrades manually.'}
                 </p>
               </div>
 
-              <div className="mt-4 border-t border-slate-100 pt-4">
+              <div className="mt-4 border-t border-white/10 pt-4">
                 <button
                   type="button"
                   onClick={() => setShowDetailedEdits(prev => !prev)}
-                  className="inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900"
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-[#CBD5E1] hover:text-white"
                 >
                   <PencilLine className="h-4 w-4" />
                   {showDetailedEdits ? 'Hide detailed edit plan' : 'Show detailed edit plan'}
@@ -390,31 +397,31 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
                 </button>
 
                 {showDetailedEdits ? (
-                  <ul className="mt-4 space-y-2 text-sm text-slate-700">
+                  <ul className="mt-4 space-y-2 text-sm text-[#CBD5E1]">
                     {activeEditList.length > 0 ? activeEditList.map(item => (
                       <li key={item} className="flex gap-2">
                         <span className="mt-1 h-1.5 w-1.5 rounded-full bg-cyan-600" />
                         <span>{item}</span>
                       </li>
                     )) : (
-                      <li className="text-slate-500">No concrete draft edits were generated.</li>
+                      <li className="text-[#94A3B8]">No concrete draft edits were generated.</li>
                     )}
                   </ul>
                 ) : null}
               </div>
-            </div>
+            </DefiPanel>
 
             <div className="lg:col-span-2 space-y-4">
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">What&apos;s working</div>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700">
+              <div className="rounded-2xl border border-white/10 bg-[#0B0D12] p-4">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">What&apos;s working</div>
+                <p className="mt-2 text-sm leading-relaxed text-[#CBD5E1]">
                   {activeWorkingSummary || 'This audience sees a few strong signals, but nothing distinct enough to summarize yet.'}
                 </p>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <div className="text-xs font-semibold uppercase tracking-wider text-slate-400">What&apos;s not working</div>
-                <p className="mt-2 text-sm leading-relaxed text-slate-700">
+              <div className="rounded-2xl border border-white/10 bg-[#0B0D12] p-4">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">What&apos;s not working</div>
+                <p className="mt-2 text-sm leading-relaxed text-[#CBD5E1]">
                   {activeLosingSummary || 'There is no clear drop-off pattern yet for this audience.'}
                 </p>
               </div>
@@ -422,7 +429,7 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
               <div className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <CheckCircle2 className="h-4 w-4 text-emerald-600" />
-                  <h4 className="font-semibold text-slate-900">Keep</h4>
+                  <h4 className="font-semibold text-[#064E3B]">Keep</h4>
                 </div>
                 <ul className="space-y-2 text-sm text-slate-700">
                   {activeKeepList.length > 0 ? activeKeepList.map(item => (
@@ -454,7 +461,7 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
               </div>
 
               {activeAggregate.dangerous_reply ? (
-                <div className="p-4 bg-red-50 rounded-2xl border border-red-100">
+                <div className="p-4 bg-red-500/10 rounded-2xl border border-red-400/30">
                   <div className="flex items-center gap-2 mb-2">
                     <AlertTriangle className="h-4 w-4 text-red-500" />
                     <h4 className="font-semibold text-red-800 text-sm">Risky reaction this draft could trigger</h4>
@@ -469,15 +476,15 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
         <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Link 
             href="/simulate" 
-            className="px-8 py-4 bg-white text-slate-700 border border-slate-300 rounded-full font-semibold hover:bg-slate-50 transition-colors text-center"
+            className={defiButtonVariants({ variant: 'outline', size: 'lg' })}
           >
             Revise & Simulate Again
           </Link>
           <button 
-            className={`px-8 py-4 rounded-full font-semibold transition-colors shadow-lg flex items-center justify-center gap-2 ${
+            className={`px-8 py-4 rounded-full font-semibold transition-colors shadow-lg flex items-center justify-center gap-2 uppercase tracking-wider ${
               isSaved 
                 ? 'bg-emerald-500 text-white shadow-emerald-500/30 cursor-default'
-                : 'bg-[#0A66C2] text-white hover:bg-[#004182] shadow-blue-500/30'
+                : 'bg-gradient-to-r from-[#EA580C] to-[#F7931A] text-white hover:brightness-110 shadow-orange-500/35'
             }`}
             onClick={handleSave}
             disabled={isSaved || isSaving}
@@ -489,19 +496,19 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
       </main>
 
       {showMethodology ? (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/45 p-4">
-          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-6 md:p-8 shadow-2xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4">
+          <div className="w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-3xl border border-white/10 bg-[#07080D] p-6 md:p-8 shadow-2xl">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-2xl font-bold tracking-tight text-slate-900">How This Simulation Works</h2>
-                <p className="mt-2 text-sm text-slate-600 max-w-2xl">
+                <h2 className="text-2xl font-heading font-bold tracking-tight text-white">How This Simulation Works</h2>
+                <p className="mt-2 text-sm text-[#94A3B8] max-w-2xl">
                   These are simulated audience reactions based on persona profiles and weighted scoring logic. They are directional guidance, not guaranteed outcomes.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setShowMethodology(false)}
-                className="rounded-full p-2 text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                className="rounded-full p-2 text-[#94A3B8] hover:bg-white/10 hover:text-white"
                 aria-label="Close methodology"
               >
                 <X className="h-5 w-5" />

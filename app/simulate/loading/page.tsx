@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Loader2, CheckCircle2 } from 'lucide-react';
+import { DefiPanel } from '@/components/ui/defi/panel';
+import { defiButtonVariants } from '@/components/ui/defi/button';
 
 export default function LoadingPage() {
   const [steps, setSteps] = useState([
@@ -113,16 +115,16 @@ export default function LoadingPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center font-sans">
-      <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-xl border border-slate-200">
-        <h2 className="text-2xl font-bold text-slate-900 mb-6 text-center">Simulating Reactions</h2>
+    <div className="defi-page flex flex-col items-center justify-center px-4">
+      <DefiPanel className="w-full max-w-md" variant="surface" padding="lg">
+        <h2 className="text-2xl font-heading font-bold text-white mb-6 text-center">Simulating Reactions</h2>
         
         {error ? (
-          <div className="p-4 bg-red-50 text-red-600 rounded-xl border border-red-200 text-center">
+          <div className="p-4 bg-red-500/10 text-red-300 rounded-xl border border-red-400/40 text-center">
             {error}
             <button 
               onClick={() => router.push('/simulate')}
-              className="mt-4 px-4 py-2 bg-red-100 hover:bg-red-200 rounded-lg text-sm font-medium transition-colors"
+              className={`${defiButtonVariants({ variant: 'outline', size: 'sm' })} mt-4`}
             >
               Try Again
             </button>
@@ -132,13 +134,13 @@ export default function LoadingPage() {
             {steps.map((step) => (
               <div key={step.id} className="flex items-center gap-4">
                 <div className="w-6 h-6 flex items-center justify-center shrink-0">
-                  {step.status === 'complete' && <CheckCircle2 className="w-6 h-6 text-emerald-500" />}
-                  {step.status === 'in_progress' && <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />}
-                  {step.status === 'pending' && <div className="w-3 h-3 rounded-full bg-slate-200" />}
+                  {step.status === 'complete' && <CheckCircle2 className="w-6 h-6 text-emerald-400" />}
+                  {step.status === 'in_progress' && <Loader2 className="w-5 h-5 text-[#F7931A] animate-spin" />}
+                  {step.status === 'pending' && <div className="w-3 h-3 rounded-full bg-white/20" />}
                 </div>
                 <span className={`text-sm font-medium transition-colors ${
-                  step.status === 'complete' ? 'text-slate-400' :
-                  step.status === 'in_progress' ? 'text-slate-900' : 'text-slate-400'
+                  step.status === 'complete' ? 'text-[#94A3B8]' :
+                  step.status === 'in_progress' ? 'text-white' : 'text-[#64748B]'
                 }`}>
                   {step.text}
                 </span>
@@ -148,11 +150,11 @@ export default function LoadingPage() {
         )}
 
         {!error && (
-          <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">Estimated time: ~30 seconds</p>
+          <div className="mt-8 pt-6 border-t border-white/10 text-center">
+            <p className="text-xs text-[#94A3B8] font-medium uppercase tracking-wider">Estimated time: ~30 seconds</p>
           </div>
         )}
-      </div>
+      </DefiPanel>
     </div>
   );
 }
