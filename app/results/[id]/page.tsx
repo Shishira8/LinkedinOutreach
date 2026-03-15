@@ -53,6 +53,7 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
   const [isSaved, setIsSaved] = useState(false);
   const [activeAudience, setActiveAudience] = useState<string | null>(null);
   const [showDetailedEdits, setShowDetailedEdits] = useState(false);
+  const [showPerformanceDetails, setShowPerformanceDetails] = useState(false);
   const [showMethodology, setShowMethodology] = useState(false);
   const [activePersonaAudience, setActivePersonaAudience] = useState<string | null>(null);
   
@@ -201,16 +202,15 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
   const activeRewrite = activeCoaching?.rewritten_post?.trim() || data?.post_text?.trim() || '';
   const formulaScore = activeAggregate
     ? Math.round(
-        (activeAggregate.would_stop_scrolling_pct || 0) * 0.35 +
-        (activeAggregate.would_like_pct || 0) * 0.25 +
-        (activeAggregate.would_comment_pct || 0) * 0.2 +
-        (activeAggregate.sentiment_score || 0) * 0.2,
+        (activeAggregate.would_stop_scrolling_pct || 0) * 0.4 +
+        (activeAggregate.would_like_pct || 0) * 0.3 +
+        (activeAggregate.would_comment_pct || 0) * 0.3,
       )
     : 0;
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24">
-      <header className="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center border-b border-slate-200">
+      <header className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-6 flex justify-between items-center border-b border-slate-200">
         <Link href="/" className="text-xl font-bold text-[#0A66C2] tracking-tight">ReplyMind</Link>
         <div className="flex items-center gap-5">
           {isSignedIn ? (
@@ -224,66 +224,100 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
         </div>
       </header>
 
-      <main className="w-full max-w-7xl mx-auto px-6 pt-8">
+      <main className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 pt-8">
         <h1 className="text-3xl font-bold tracking-tight mb-8">Simulation Results</h1>
         <p className="text-sm text-slate-500 mb-8 max-w-3xl">
-          Engagement scores are normalized from simulated attention, likes, comments, and sentiment so you can compare future runs on the same scale.
+          Engagement scores are normalized from simulated attention, likes, and comments so you can compare future runs on the same scale.
         </p>
 
         {/* SECTION 1 - Engagement Scores */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {audiences.map(aud => {
-            const agg = aggregate_json[aud];
-            if (!agg) return null;
-            return (
-              <div key={aud} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
-                  {aud.replace('_', ' ')}
-                </h3>
-                <div className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 mb-4">
-                  Normalized score
-                </div>
-                <div className="flex items-end gap-2 mb-6">
-                  <div className="text-5xl font-light text-slate-800">{agg.engagement_score || 0}</div>
-                  <div className="text-lg text-slate-400 mb-1">/100</div>
-                </div>
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-slate-500">Stop Scrolling</span>
-                    <span className="font-semibold text-slate-700">{agg.would_stop_scrolling_pct || 0}%</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-1.5">
-                    <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${agg.would_stop_scrolling_pct || 0}%` }}></div>
-                  </div>
+        <div className="mb-8">
+          <button
+            type="button"
+            onClick={() => setShowPerformanceDetails(prev => !prev)}
+            className="inline-flex items-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          >
+            {showPerformanceDetails ? 'Hide performance breakdown' : 'Show performance breakdown'}
+            {showPerformanceDetails ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+          {!showPerformanceDetails && audiences.length > 0 ? (
+            <div className="mt-3 rounded-2xl border border-slate-200 bg-white p-4">
+              <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-2">Top audience snapshot</div>
+              {(() => {
+                const rankedAudiences = [...audiences].sort(
+                  (a, b) => (aggregate_json[b]?.engagement_score || 0) - (aggregate_json[a]?.engagement_score || 0),
+                );
+                const topAudience = rankedAudiences[0];
+                const topAgg = topAudience ? aggregate_json[topAudience] : null;
+                if (!topAudience || !topAgg) {
+                  return <p className="text-sm text-slate-500">Run another simulation to populate audience performance.</p>;
+                }
 
-                  <div className="flex justify-between items-center text-sm pt-2">
-                    <span className="text-slate-500">Would Like</span>
-                    <span className="font-semibold text-slate-700">{agg.would_like_pct || 0}%</span>
+                return (
+                  <div className="text-sm text-slate-700">
+                    <span className="font-semibold text-slate-900">{formatAudienceLabel(topAudience)}</span>
+                    <span className="mx-2 text-slate-400">•</span>
+                    <span>{topAgg.engagement_score || 0}/100</span>
+                    <span className="mx-2 text-slate-400">•</span>
+                    <span>Stop: {topAgg.would_stop_scrolling_pct || 0}%</span>
+                    <span className="mx-2 text-slate-400">•</span>
+                    <span>Like: {topAgg.would_like_pct || 0}%</span>
+                    <span className="mx-2 text-slate-400">•</span>
+                    <span>Comment: {topAgg.would_comment_pct || 0}%</span>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-1.5">
-                    <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${agg.would_like_pct || 0}%` }}></div>
-                  </div>
+                );
+              })()}
+            </div>
+          ) : null}
+          {showPerformanceDetails ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+              {audiences.map(aud => {
+                const agg = aggregate_json[aud];
+                if (!agg) return null;
+                return (
+                  <div key={aud} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4">
+                      {aud.replace('_', ' ')}
+                    </h3>
+                    <div className="inline-flex items-center rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 mb-4">
+                      Normalized score
+                    </div>
+                    <div className="flex items-end gap-2 mb-6">
+                      <div className="text-5xl font-light text-slate-800">{agg.engagement_score || 0}</div>
+                      <div className="text-lg text-slate-400 mb-1">/100</div>
+                    </div>
 
-                  <div className="flex justify-between items-center text-sm pt-2">
-                    <span className="text-slate-500">Would Comment</span>
-                    <span className="font-semibold text-slate-700">{agg.would_comment_pct || 0}%</span>
-                  </div>
-                  <div className="w-full bg-slate-100 rounded-full h-1.5">
-                    <div className="bg-cyan-500 h-1.5 rounded-full" style={{ width: `${agg.would_comment_pct || 0}%` }}></div>
-                  </div>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-slate-500">Stop Scrolling</span>
+                        <span className="font-semibold text-slate-700">{agg.would_stop_scrolling_pct || 0}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-1.5">
+                        <div className="bg-blue-500 h-1.5 rounded-full" style={{ width: `${agg.would_stop_scrolling_pct || 0}%` }}></div>
+                      </div>
 
-                  <div className="flex justify-between items-center text-sm pt-2">
-                    <span className="text-slate-500">Sentiment</span>
-                    <span className="font-semibold text-slate-700">{agg.sentiment_score || 0}%</span>
+                      <div className="flex justify-between items-center text-sm pt-2">
+                        <span className="text-slate-500">Would Like</span>
+                        <span className="font-semibold text-slate-700">{agg.would_like_pct || 0}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-1.5">
+                        <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${agg.would_like_pct || 0}%` }}></div>
+                      </div>
+
+                      <div className="flex justify-between items-center text-sm pt-2">
+                        <span className="text-slate-500">Would Comment</span>
+                        <span className="font-semibold text-slate-700">{agg.would_comment_pct || 0}%</span>
+                      </div>
+                      <div className="w-full bg-slate-100 rounded-full h-1.5">
+                        <div className="bg-cyan-500 h-1.5 rounded-full" style={{ width: `${agg.would_comment_pct || 0}%` }}></div>
+                      </div>
+
+                    </div>
                   </div>
-                  <div className="w-full bg-slate-100 rounded-full h-1.5">
-                    <div className="bg-slate-700 h-1.5 rounded-full" style={{ width: `${agg.sentiment_score || 0}%` }}></div>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+                );
+              })}
+            </div>
+          ) : null}
         </div>
 
         {/* SECTION 2 - Rewrite Studio */}
@@ -432,15 +466,15 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
           </div>
         ) : null}
 
-        <div className="flex justify-center gap-4">
+        <div className="flex flex-col sm:flex-row justify-center gap-4">
           <Link 
             href="/simulate" 
-            className="px-8 py-4 bg-white text-slate-700 border border-slate-300 rounded-full font-semibold hover:bg-slate-50 transition-colors"
+            className="px-8 py-4 bg-white text-slate-700 border border-slate-300 rounded-full font-semibold hover:bg-slate-50 transition-colors text-center"
           >
             Revise & Simulate Again
           </Link>
           <button 
-            className={`px-8 py-4 rounded-full font-semibold transition-colors shadow-lg flex items-center gap-2 ${
+            className={`px-8 py-4 rounded-full font-semibold transition-colors shadow-lg flex items-center justify-center gap-2 ${
               isSaved 
                 ? 'bg-emerald-500 text-white shadow-emerald-500/30 cursor-default'
                 : 'bg-[#0A66C2] text-white hover:bg-[#004182] shadow-blue-500/30'
@@ -489,13 +523,13 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
               <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
                 <h3 className="text-sm font-bold uppercase tracking-wider text-slate-500">Engagement Score Formula</h3>
                 <p className="mt-3 text-sm text-slate-700 leading-6">
-                  Engagement = 0.35 x Stop Scrolling + 0.25 x Would Like + 0.20 x Would Comment + 0.20 x Sentiment
+                  Engagement = 0.40 x Stop Scrolling + 0.30 x Would Like + 0.30 x Would Comment
                 </p>
                 {activeAggregate ? (
                   <div className="mt-3 rounded-xl border border-cyan-200 bg-cyan-50 p-3 text-sm text-slate-700">
                     <div className="font-semibold text-slate-900 mb-1">For {formatAudienceLabel(activeAudience || '')}</div>
                     <div>
-                      0.35 x {activeAggregate.would_stop_scrolling_pct || 0} + 0.25 x {activeAggregate.would_like_pct || 0} + 0.20 x {activeAggregate.would_comment_pct || 0} + 0.20 x {activeAggregate.sentiment_score || 0} = <span className="font-semibold">{formulaScore}</span>
+                      0.40 x {activeAggregate.would_stop_scrolling_pct || 0} + 0.30 x {activeAggregate.would_like_pct || 0} + 0.30 x {activeAggregate.would_comment_pct || 0} = <span className="font-semibold">{formulaScore}</span>
                     </div>
                     <div className="mt-1 text-xs text-slate-600">Displayed score: {activeAggregate.engagement_score || 0}</div>
                   </div>

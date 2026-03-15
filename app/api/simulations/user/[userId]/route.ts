@@ -7,12 +7,10 @@ type AggregatePayload = {
   would_stop_scrolling_pct?: number;
   would_like_pct?: number;
   would_comment_pct?: number;
-  sentiment_score?: number;
   score_breakdown?: {
     attention?: number;
     approval?: number;
     conversation?: number;
-    sentiment?: number;
   };
   coaching?: {
     whats_working_summary?: string;
@@ -38,7 +36,6 @@ type AudienceStats = {
   average_attention: number;
   average_approval: number;
   average_conversation: number;
-  average_sentiment: number;
   strongest_signal: string;
 };
 
@@ -135,7 +132,6 @@ function strongestSignalLabel(stats: AudienceStats) {
     { label: 'attention', value: stats.average_attention },
     { label: 'approval', value: stats.average_approval },
     { label: 'conversation', value: stats.average_conversation },
-    { label: 'sentiment', value: stats.average_sentiment },
   ].sort((left, right) => right.value - left.value);
 
   return signals[0]?.label || 'attention';
@@ -198,7 +194,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ userId: 
     );
 
     const audienceScores = new Map<string, number[]>();
-    const audienceBreakdowns = new Map<string, { attention: number[]; approval: number[]; conversation: number[]; sentiment: number[] }>();
+    const audienceBreakdowns = new Map<string, { attention: number[]; approval: number[]; conversation: number[] }>();
     const strengths = new Map<string, { label: string; count: number; audiences: Set<string> }>();
     const weakSpots = new Map<string, { label: string; count: number; audiences: Set<string> }>();
     const fixes = new Map<string, { label: string; count: number; audiences: Set<string> }>();
@@ -219,7 +215,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ userId: 
           attention: [],
           approval: [],
           conversation: [],
-          sentiment: [],
         };
 
         if (typeof aggregate.engagement_score === 'number') {
@@ -231,7 +226,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ userId: 
         if (typeof scoreBreakdown.attention === 'number') breakdowns.attention.push(scoreBreakdown.attention);
         if (typeof scoreBreakdown.approval === 'number') breakdowns.approval.push(scoreBreakdown.approval);
         if (typeof scoreBreakdown.conversation === 'number') breakdowns.conversation.push(scoreBreakdown.conversation);
-        if (typeof scoreBreakdown.sentiment === 'number') breakdowns.sentiment.push(scoreBreakdown.sentiment);
         audienceBreakdowns.set(audience, breakdowns);
 
         const coaching = aggregate.coaching || {};
@@ -266,7 +260,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ userId: 
           attention: [],
           approval: [],
           conversation: [],
-          sentiment: [],
         };
 
         const stats: AudienceStats = {
@@ -277,7 +270,6 @@ export async function GET(req: Request, { params }: { params: Promise<{ userId: 
           average_attention: roundMetric(breakdowns.attention.reduce((sum, value) => sum + value, 0) / Math.max(breakdowns.attention.length, 1)),
           average_approval: roundMetric(breakdowns.approval.reduce((sum, value) => sum + value, 0) / Math.max(breakdowns.approval.length, 1)),
           average_conversation: roundMetric(breakdowns.conversation.reduce((sum, value) => sum + value, 0) / Math.max(breakdowns.conversation.length, 1)),
-          average_sentiment: roundMetric(breakdowns.sentiment.reduce((sum, value) => sum + value, 0) / Math.max(breakdowns.sentiment.length, 1)),
           strongest_signal: 'attention',
         };
 

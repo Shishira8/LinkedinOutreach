@@ -49,7 +49,6 @@ type AudienceAffinity = {
   average_attention: number;
   average_approval: number;
   average_conversation: number;
-  average_sentiment: number;
   strongest_signal: string;
 };
 
@@ -76,7 +75,6 @@ function formatAudienceLabel(audience: string) {
 function formatSignalLabel(signal: string) {
   if (signal === 'approval') return 'approval';
   if (signal === 'conversation') return 'conversation';
-  if (signal === 'sentiment') return 'sentiment';
   return 'attention';
 }
 
@@ -108,6 +106,7 @@ export default function DashboardPage() {
   const [analyticsImport, setAnalyticsImport] = useState<AnalyticsImportResponse['import']>(null);
   const [dashboardSummary, setDashboardSummary] = useState<DashboardSummary | null>(null);
   const [recentRuns, setRecentRuns] = useState<DashboardSimulation[]>([]);
+  const [activeView, setActiveView] = useState<'overview' | 'trending' | 'history'>('overview');
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn || !userId) {
@@ -170,6 +169,7 @@ export default function DashboardPage() {
   }
 
   const strongestAudience = dashboardSummary?.strongest_audience;
+  const topTrendingTopic = weeklyLinkedInSignals.topics[0];
 
   const summaryCards = [
     {
@@ -196,7 +196,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans pb-24">
-      <header className="w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center border-b border-slate-200">
+      <header className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 py-6 flex justify-between items-center border-b border-slate-200">
         <Link href="/" className="text-xl font-bold text-[#0A66C2] tracking-tight">ReplyMind</Link>
         <div className="flex items-center gap-5">
           <Link href="/simulate" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors">
@@ -205,7 +205,7 @@ export default function DashboardPage() {
         </div>
       </header>
 
-      <main className="w-full max-w-7xl mx-auto px-6 pt-8 space-y-8">
+      <main className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-10 pt-8 space-y-8">
         <section className="rounded-[2rem] border border-slate-200 bg-gradient-to-br from-slate-950 via-slate-900 to-[#0A66C2] p-8 text-white shadow-xl">
           <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
             <div className="max-w-3xl">
@@ -222,10 +222,17 @@ export default function DashboardPage() {
               <Link href="/simulate" className="inline-flex items-center gap-2 rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-900 hover:bg-slate-100 transition-colors">
                 Run another simulation <ArrowRight className="h-4 w-4" />
               </Link>
+              <button
+                type="button"
+                onClick={() => setActiveView('trending')}
+                className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/10 px-5 py-3 text-sm font-semibold text-white hover:bg-white/20 transition-colors"
+              >
+                View trending signals <Flame className="h-4 w-4" />
+              </button>
             </div>
           </div>
 
-          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-3">
+          <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-4">
             {summaryCards.map(card => {
               const Icon = card.icon;
               return (
@@ -238,10 +245,65 @@ export default function DashboardPage() {
                 </div>
               );
             })}
+
+            <button
+              type="button"
+              onClick={() => setActiveView('trending')}
+              className="text-left rounded-2xl border border-orange-300/30 bg-orange-500/10 p-4 hover:bg-orange-500/20 transition-colors"
+            >
+              <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-orange-100">
+                <Flame className="h-4 w-4" /> Trending this week
+              </div>
+              <div className="mt-3 text-lg font-semibold leading-tight text-white">
+                {topTrendingTopic?.name || 'LinkedIn trends'}
+              </div>
+              <p className="mt-2 text-sm leading-relaxed text-slate-200 line-clamp-3">
+                {topTrendingTopic?.why_it_is_hot || 'Open trending signals to see what topics and angles are currently performing.'}
+              </p>
+            </button>
           </div>
         </section>
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border border-slate-200 bg-white p-3 shadow-sm">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <button
+              type="button"
+              onClick={() => setActiveView('overview')}
+              className={`rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
+                activeView === 'overview'
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              Overview
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('trending')}
+              className={`rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
+                activeView === 'trending'
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              Trending on LinkedIn
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveView('history')}
+              className={`rounded-xl px-4 py-3 text-sm font-semibold transition-colors ${
+                activeView === 'history'
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-slate-50 text-slate-700 hover:bg-slate-100'
+              }`}
+            >
+              Recent saved runs
+            </button>
+          </div>
+        </section>
+
+        {activeView === 'overview' ? (
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <h2 className="text-2xl font-bold tracking-tight text-slate-900">Your cross-run patterns</h2>
@@ -277,7 +339,7 @@ export default function DashboardPage() {
                     <div className="mt-4 h-2 w-full rounded-full bg-slate-200">
                       <div className="h-2 rounded-full bg-[#0A66C2]" style={{ width: `${(item.average_engagement_score / affinityBarMax) * 100}%` }} />
                     </div>
-                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-600 md:grid-cols-4">
+                    <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-600 md:grid-cols-3">
                       <div>
                         <div className="text-xs uppercase tracking-wider text-slate-400">Attention</div>
                         <div className="mt-1 font-semibold text-slate-900">{item.average_attention}%</div>
@@ -289,10 +351,6 @@ export default function DashboardPage() {
                       <div>
                         <div className="text-xs uppercase tracking-wider text-slate-400">Conversation</div>
                         <div className="mt-1 font-semibold text-slate-900">{item.average_conversation}%</div>
-                      </div>
-                      <div>
-                        <div className="text-xs uppercase tracking-wider text-slate-400">Sentiment</div>
-                        <div className="mt-1 font-semibold text-slate-900">{item.average_sentiment}%</div>
                       </div>
                     </div>
                   </div>
@@ -363,26 +421,30 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        </section>
-
-        {analyticsImport ? (
-          <LinkedInTrendsPanel
-            engagementSeries={analyticsImport.engagement_series_json || []}
-            topPosts={analyticsImport.top_posts_json || []}
-            insights={analyticsImport.performance_insights_json || []}
-          />
-        ) : (
-          <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center shadow-sm">
-            <BarChart3 className="mx-auto h-8 w-8 text-slate-400" />
-            <h2 className="mt-4 text-xl font-semibold text-slate-900">Import your LinkedIn analytics to unlock trends</h2>
-            <p className="mt-2 text-sm text-slate-500">Your dashboard will show daily performance curves, top posts, and posting recommendations once you upload your creator export.</p>
-            <Link href="/simulate" className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white hover:bg-[#004182] transition-colors">
-              Upload analytics <ArrowRight className="h-4 w-4" />
-            </Link>
           </section>
-        )}
+        ) : null}
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+        {activeView === 'trending' ? (
+          analyticsImport ? (
+            <LinkedInTrendsPanel
+              engagementSeries={analyticsImport.engagement_series_json || []}
+              topPosts={analyticsImport.top_posts_json || []}
+              insights={analyticsImport.performance_insights_json || []}
+            />
+          ) : (
+            <section className="rounded-3xl border border-dashed border-slate-300 bg-white p-8 text-center shadow-sm">
+              <BarChart3 className="mx-auto h-8 w-8 text-slate-400" />
+              <h2 className="mt-4 text-xl font-semibold text-slate-900">Import your LinkedIn analytics to unlock trends</h2>
+              <p className="mt-2 text-sm text-slate-500">Your dashboard will show daily performance curves, top posts, and posting recommendations once you upload your creator export.</p>
+              <Link href="/simulate" className="mt-5 inline-flex items-center gap-2 rounded-full bg-[#0A66C2] px-5 py-3 text-sm font-semibold text-white hover:bg-[#004182] transition-colors">
+                Upload analytics <ArrowRight className="h-4 w-4" />
+              </Link>
+            </section>
+          )
+        ) : null}
+
+        {activeView === 'trending' ? (
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <div className="inline-flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-wider text-orange-700">
@@ -433,72 +495,75 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-        </section>
+          </section>
+        ) : null}
 
-        <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-slate-900">Recent saved runs</h2>
-              <p className="mt-1 text-sm text-slate-500">Keep this lightweight. Use it to jump back into the latest result pages when you need the full breakdown.</p>
-            </div>
-            {analyticsImport?.created_at ? (
-              <div className="text-xs text-slate-500">Latest audience import: {new Date(analyticsImport.created_at).toLocaleString()}</div>
-            ) : null}
-          </div>
-
-          <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
-            {recentRuns.length > 0 ? recentRuns.map(simulation => {
-              const bestAudience = getBestAudience(simulation);
-
-              return (
-                <Link
-                  key={simulation.id}
-                  href={`/results/${simulation.id}`}
-                  className="group rounded-3xl border border-slate-200 bg-slate-50 p-5 transition-colors hover:border-slate-300 hover:bg-white"
-                >
-                  <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wider text-slate-400">
-                        <span>{simulation.platform}</span>
-                        <span>•</span>
-                        <span>{new Date(simulation.created_at).toLocaleDateString()}</span>
-                        <span>•</span>
-                        <span className={simulation.status === 'complete' ? 'text-emerald-600' : 'text-amber-600'}>{simulation.status}</span>
-                      </div>
-                      <p className="mt-3 text-sm leading-relaxed text-slate-700">{truncatePost(simulation.post_text)}</p>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {simulation.selected_audiences.map(audience => (
-                          <span key={audience} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 border border-slate-200">
-                            {formatAudienceLabel(audience)}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="flex min-w-[180px] flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4">
-                      <div>
-                        <div className="text-xs uppercase tracking-wider text-slate-400">Best audience in run</div>
-                        <div className="mt-1 text-sm font-semibold text-slate-900">{bestAudience ? formatAudienceLabel(bestAudience.audience) : 'No score yet'}</div>
-                      </div>
-                      <div>
-                        <div className="text-xs uppercase tracking-wider text-slate-400">Top score in run</div>
-                        <div className="mt-1 text-2xl font-semibold text-slate-900">{bestAudience ? `${bestAudience.score}/100` : '—'}</div>
-                      </div>
-                      <div className="inline-flex items-center gap-2 text-sm font-medium text-[#0A66C2]">
-                        View full breakdown <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              );
-            }) : (
-              <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-slate-500 lg:col-span-2">
-                <Clock3 className="mx-auto h-8 w-8 text-slate-400" />
-                <p className="mt-4 text-sm">You do not have any saved simulations yet. Save a few completed runs and this dashboard will start surfacing patterns that actually matter.</p>
+        {activeView === 'history' ? (
+          <section className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
+              <div>
+                <h2 className="text-2xl font-bold tracking-tight text-slate-900">Recent saved runs</h2>
+                <p className="mt-1 text-sm text-slate-500">Keep this lightweight. Use it to jump back into the latest result pages when you need the full breakdown.</p>
               </div>
-            )}
-          </div>
-        </section>
+              {analyticsImport?.created_at ? (
+                <div className="text-xs text-slate-500">Latest audience import: {new Date(analyticsImport.created_at).toLocaleString()}</div>
+              ) : null}
+            </div>
+
+            <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
+              {recentRuns.length > 0 ? recentRuns.map(simulation => {
+                const bestAudience = getBestAudience(simulation);
+
+                return (
+                  <Link
+                    key={simulation.id}
+                    href={`/results/${simulation.id}`}
+                    className="group rounded-3xl border border-slate-200 bg-slate-50 p-5 transition-colors hover:border-slate-300 hover:bg-white"
+                  >
+                    <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2 text-xs uppercase tracking-wider text-slate-400">
+                          <span>{simulation.platform}</span>
+                          <span>•</span>
+                          <span>{new Date(simulation.created_at).toLocaleDateString()}</span>
+                          <span>•</span>
+                          <span className={simulation.status === 'complete' ? 'text-emerald-600' : 'text-amber-600'}>{simulation.status}</span>
+                        </div>
+                        <p className="mt-3 text-sm leading-relaxed text-slate-700">{truncatePost(simulation.post_text)}</p>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {simulation.selected_audiences.map(audience => (
+                            <span key={audience} className="rounded-full bg-white px-3 py-1 text-xs font-semibold text-slate-600 border border-slate-200">
+                              {formatAudienceLabel(audience)}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="flex min-w-[180px] flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4">
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-slate-400">Best audience in run</div>
+                          <div className="mt-1 text-sm font-semibold text-slate-900">{bestAudience ? formatAudienceLabel(bestAudience.audience) : 'No score yet'}</div>
+                        </div>
+                        <div>
+                          <div className="text-xs uppercase tracking-wider text-slate-400">Top score in run</div>
+                          <div className="mt-1 text-2xl font-semibold text-slate-900">{bestAudience ? `${bestAudience.score}/100` : '—'}</div>
+                        </div>
+                        <div className="inline-flex items-center gap-2 text-sm font-medium text-[#0A66C2]">
+                          View full breakdown <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                );
+              }) : (
+                <div className="rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-8 text-center text-slate-500 lg:col-span-2">
+                  <Clock3 className="mx-auto h-8 w-8 text-slate-400" />
+                  <p className="mt-4 text-sm">You do not have any saved simulations yet. Save a few completed runs and this dashboard will start surfacing patterns that actually matter.</p>
+                </div>
+              )}
+            </div>
+          </section>
+        ) : null}
       </main>
     </div>
   );
