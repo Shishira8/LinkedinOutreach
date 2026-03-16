@@ -62,23 +62,6 @@ Areas still on the short‑term roadmap include run tagging, experiment labeling
 - Integrate real **billing/paid tiers** once usage patterns justify it
 - Explore **export options** (CSV, PDF) for simulation histories and dashboard reports
 
----
-
-## 📄 Getting Started Locally
-
-1. Clone the repo and `cd` into it.
-2. Install dependencies: `npm install`.
-3. Set up a Supabase project, enable RLS, and update `.env` with keys (see `lib/supabase.ts` for required vars):
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
-   - `GEMINI_API_KEY`
-   - (Optional) `SIMULATION_PROMPT_VERSION` to switch between `v1` and `v2` prompt behavior
-4. Run migrations using `supabase` CLI or apply `supabase_schema.sql` manually.
-5. Start the dev server: `npm run dev`.
-6. Navigate to `http://localhost:3000` and sign in via Clerk.
-
-> ⚠️ This project is experimental; design decisions are in flux and the schema may change frequently.
 
 ---
 
