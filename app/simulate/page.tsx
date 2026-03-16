@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ChangeEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ExternalLink, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
@@ -34,6 +34,14 @@ type AnalyticsImportResponse = {
   } | null;
 };
 
+type UserProfileResponse = {
+  profile: {
+    full_name?: string;
+    current_role?: string;
+    career_goals?: string;
+  } | null;
+};
+
 export default function SimulatePage() {
   const [postText, setPostText] = useState('');
   const [audiences, setAudiences] = useState({
@@ -51,6 +59,8 @@ export default function SimulatePage() {
   const [analyticsImportedAt, setAnalyticsImportedAt] = useState<string | null>(null);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [analyticsLoadNotice, setAnalyticsLoadNotice] = useState<string | null>(null);
+  const [profileReady, setProfileReady] = useState(false);
+  const [profileLoadNotice, setProfileLoadNotice] = useState<string | null>(null);
   const [isUploadingAnalytics, setIsUploadingAnalytics] = useState(false);
   const [showOptionalImport, setShowOptionalImport] = useState(false);
   const router = useRouter();
@@ -71,12 +81,30 @@ export default function SimulatePage() {
 
     const loadLatestAnalyticsImport = async () => {
       try {
-        const response = await fetch('/api/linkedin-analytics');
-        if (!response.ok) {
+        const [analyticsResponse, profileResponse] = await Promise.all([
+          fetch('/api/linkedin-analytics'),
+          fetch('/api/user-profile'),
+        ]);
+
+        if (!profileResponse.ok) {
+          throw new Error('Failed to load your saved profile context.');
+        }
+
+        const profilePayload: UserProfileResponse = await profileResponse.json();
+        const hasProfileContext = Boolean(
+          profilePayload.profile && (
+            profilePayload.profile.full_name ||
+            profilePayload.profile.current_role ||
+            profilePayload.profile.career_goals
+          ),
+        );
+        setProfileReady(hasProfileContext);
+
+        if (!analyticsResponse.ok) {
           throw new Error('Failed to load your latest LinkedIn audience import.');
         }
 
-        const payload: AnalyticsImportResponse = await response.json();
+        const payload: AnalyticsImportResponse = await analyticsResponse.json();
         if (!payload.import) {
           return;
         }
@@ -87,8 +115,11 @@ export default function SimulatePage() {
         setPerformanceInsights(payload.import.performance_insights_json || []);
         setAnalyticsFileName(payload.import.file_name);
         setAnalyticsImportedAt(payload.import.created_at);
+        setProfileLoadNotice(null);
       } catch (error: any) {
-        setAnalyticsLoadNotice(error.message || 'Failed to load your latest LinkedIn audience import.');
+        const message = error.message || 'Failed to load your latest LinkedIn audience import.';
+        setAnalyticsLoadNotice(message);
+        setProfileLoadNotice(message);
       }
     };
 
@@ -161,9 +192,14 @@ export default function SimulatePage() {
         <div className="defi-container py-6 flex justify-between items-center">
         <Link href="/" className="text-xl defi-logo">ReplyMind</Link>
         {isSignedIn ? (
-          <Link href="/dashboard" className="text-sm font-medium uppercase tracking-wider defi-link">
-            Dashboard
-          </Link>
+          <div className="flex items-center gap-4">
+            <Link href="/profile" className="text-sm font-medium uppercase tracking-wider defi-link">
+              Profile
+            </Link>
+            <Link href="/dashboard" className="text-sm font-medium uppercase tracking-wider defi-link">
+              Dashboard
+            </Link>
+          </div>
         ) : null}
         </div>
       </header>
@@ -181,6 +217,17 @@ export default function SimulatePage() {
                 <p className="text-sm text-[#94A3B8] leading-relaxed mt-1">
                   Skip this to simulate immediately, or connect your audience export to generate personalized personas.
                 </p>
+                {isSignedIn ? (
+                  profileReady ? (
+                    <p className="text-xs font-semibold text-emerald-400 mt-2">Profile context ready for V2 audience simulation prompt.</p>
+                  ) : (
+                    <p className="text-xs text-amber-300 mt-2">
+                      Add your personal brand profile so simulations can align with your target roles and career goals.
+                      {' '}
+                      <Link href="/profile" className="underline underline-offset-4 text-amber-200">Set profile</Link>
+                    </p>
+                  )
+                ) : null}
                 {analyticsProfile ? (
                   <p className="text-xs font-semibold text-emerald-400 mt-2">Audience profile connected and ready.</p>
                 ) : (
@@ -218,7 +265,7 @@ export default function SimulatePage() {
                     <DefiInput
                       type="file"
                       accept=".csv,.xlsx,.xls,.xlsm,.xlsb,.xlxs,.json"
-                      onChange={(event) => setSelectedFile(event.target.files?.[0] || null)}
+                      onChange={(event: ChangeEvent<HTMLInputElement>) => setSelectedFile(event.target.files?.[0] || null)}
                       className="block h-auto border border-white/20 file:mr-4 file:rounded-full file:border-0 file:bg-[#F7931A] file:px-4 file:py-2 file:text-xs file:font-semibold file:uppercase file:tracking-wider file:text-white hover:file:bg-[#EA580C]"
                     />
                     <p className="text-xs text-[#94A3B8] mt-2">
@@ -261,6 +308,12 @@ export default function SimulatePage() {
               {analyticsLoadNotice ? (
                 <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 p-4 text-sm text-amber-200">
                   {analyticsLoadNotice}
+                </div>
+              ) : null}
+
+              {profileLoadNotice ? (
+                <div className="rounded-xl border border-amber-400/35 bg-amber-500/10 p-4 text-sm text-amber-200">
+                  {profileLoadNotice}
                 </div>
               ) : null}
 

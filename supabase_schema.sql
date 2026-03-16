@@ -42,6 +42,8 @@ CREATE TABLE public.simulation_results (
   personas_json JSONB NOT NULL,
   reactions_json JSONB NOT NULL,
   aggregate_json JSONB NOT NULL,
+  prompt_version TEXT NOT NULL DEFAULT 'v1',
+  report_v2_json JSONB,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -102,6 +104,29 @@ ALTER TABLE public.user_persona_packs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users can view own persona packs" ON public.user_persona_packs
   FOR SELECT USING (clerk_user_id = auth.uid()::text);
 
+-- 7. user brand profiles used by v2 simulation prompts
+CREATE TABLE public.user_brand_profiles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  clerk_user_id TEXT UNIQUE NOT NULL,
+  full_name TEXT,
+  current_job_role TEXT,
+  target_roles TEXT[] NOT NULL DEFAULT '{}',
+  target_industries TEXT[] NOT NULL DEFAULT '{}',
+  years_experience INTEGER,
+  expertise_areas TEXT[] NOT NULL DEFAULT '{}',
+  personal_brand_keywords TEXT[] NOT NULL DEFAULT '{}',
+  writing_tone TEXT,
+  career_goals TEXT,
+  call_to_action_preference TEXT,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+ALTER TABLE public.user_brand_profiles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own brand profile" ON public.user_brand_profiles
+  FOR SELECT USING (clerk_user_id = auth.uid()::text);
+
 -- Indexes for performance
 CREATE INDEX idx_users_clerk_id ON public.users(clerk_user_id);
 CREATE INDEX idx_simulations_user_id ON public.simulations(user_id);
@@ -111,3 +136,4 @@ CREATE INDEX idx_anonymous_usage_window_started_at ON public.anonymous_usage_quo
 CREATE INDEX idx_linkedin_audience_imports_clerk_id ON public.linkedin_audience_imports(clerk_user_id);
 CREATE INDEX idx_linkedin_audience_imports_created_at ON public.linkedin_audience_imports(created_at);
 CREATE INDEX idx_user_persona_packs_lookup ON public.user_persona_packs(clerk_user_id, linkedin_import_id);
+CREATE INDEX idx_user_brand_profiles_clerk_id ON public.user_brand_profiles(clerk_user_id);

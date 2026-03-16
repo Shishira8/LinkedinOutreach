@@ -10,12 +10,12 @@ At its core, the service ingests a draft post and predicts how different audienc
 ## 🚀 Key Features
 
 - **LinkedIn Analytics Import** – Upload your audience export (`.xlsx` or `.xls`) and the system builds persona profiles, demographic breakdowns, and affinity categories.
-- **Audience Simulation** – Draft a post and run it through the simulator; the AI returns a normalized score along with detailed, persona‑aware feedback.
+- **Audience Simulation (v2 prompt + report)** – Draft a post and run it through the simulator; the AI returns a normalized score along with detailed, persona‑aware feedback. The newer `v2` prompt generates a structured coaching report (`report_v2_json`) that is stored alongside the run.
+- **Personal Brand Profile** – Set your target roles, industries, tone, and career goals in the profile page to help tailor simulations and coaching feedback.
 - **Deterministic & Auditable Scoring** – The scoring logic is stable and traceable, allowing you to compare iterations of the same post and track improvements.
-- **Quota & Billing Protection** – API key usage is guarded with both authenticated and anonymous quotas enforced via Supabase RLS and a service-role client.
-- **Dashboard & Trends** – A personalized dashboard replaces raw run counts with analytics‑derived affinities, recurring strengths/weaknesses, and curated weekly signals.
-- **Coaching Guidance** – Feedback is reformatted into concise, actionable edits instead of verbose explanations.
+- **Quota Enforcement** – Anonymous demo usage is limited (rolling window), while authenticated users get full access. Quotas are enforced via Supabase RLS and a service-role client.
 - **Persona Caching** – Once your LinkedIn file is processed, persona packs are cached for faster subsequent simulations.
+- **Dashboard & Trends** – A personalized dashboard replaces raw run counts with analytics‑derived affinities, recurring strengths/weaknesses, and curated weekly signals.
 
 ---
 
@@ -43,11 +43,12 @@ At its core, the service ingests a draft post and predicts how different audienc
 
 1. **Initial Simulation MVP** – Basic draft input, AI response, scoring framework
 2. **Analytics Import & Persona Modelling** – Support for LinkedIn export, demographics parsing, persona creation
-3. **Quota Enforcement & Billing Prep** – Anonymous and authenticated usage limits, intent to add real billing later
-4. **UI Improvements** – Upload flow, results styling, coaching reformatting
-5. **Dashboard Build** – Added `/dashboard` page; originally displayed simulation history, later refactored into analytics summaries and weekly signals per latest design
-6. **Weekly Signals** – Static dataset with topical prompts and writing tips surfaced in the dashboard
-7. **Documentation** – Readme trimmed and iteratively improved with every milestone
+3. **Personal Brand Profiles** – Save user career/brand context to improve simulation relevance
+4. **Quota Enforcement & Billing Prep** – Anonymous and authenticated usage limits, intent to add real billing later
+5. **UI Improvements** – Upload flow, results styling, coaching reformatting
+6. **Dashboard Build** – Added `/dashboard` page; originally displayed simulation history, later refactored into analytics summaries and weekly signals per latest design
+7. **Weekly Signals** – Static dataset with topical prompts and writing tips surfaced in the dashboard
+8. **Structured Simulation Reports** – Added `v2` prompt and `report_v2_json` output for richer coaching output
 
 Areas still on the short‑term roadmap include run tagging, experiment labeling, comparison views between simulations, and an administrative interface for editing weekly signals.
 
@@ -67,7 +68,12 @@ Areas still on the short‑term roadmap include run tagging, experiment labeling
 
 1. Clone the repo and `cd` into it.
 2. Install dependencies: `npm install`.
-3. Set up a Supabase project, enable RLS, and update `.env` with keys.
+3. Set up a Supabase project, enable RLS, and update `.env` with keys (see `lib/supabase.ts` for required vars):
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `GEMINI_API_KEY`
+   - (Optional) `SIMULATION_PROMPT_VERSION` to switch between `v1` and `v2` prompt behavior
 4. Run migrations using `supabase` CLI or apply `supabase_schema.sql` manually.
 5. Start the dev server: `npm run dev`.
 6. Navigate to `http://localhost:3000` and sign in via Clerk.
@@ -80,6 +86,7 @@ Areas still on the short‑term roadmap include run tagging, experiment labeling
 
 - The simulation scoring logic lives in `lib/scoring.ts` and is intentionally deterministic to make comparisons easy.
 - Persona generation is in `lib/linkedin-analytics.ts`; it handles multi‑sheet exports and caches results per user.
+- User brand profiles are persisted in `user_brand_profiles` and influence prompt generation for `v2` reports.
 - Dashboard analytics summaries are served by `/api/simulations/user/[userId]` and rely on JSONB aggregates stored alongside each run.
 
 ---

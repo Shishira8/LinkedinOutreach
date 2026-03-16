@@ -20,6 +20,9 @@ type AggregatePayload = {
     edits_to_add?: string[] | string;
     suggested_fix?: string[] | string;
   };
+  strengths?: Array<{ title?: string; why?: string }>;
+  weaknesses?: Array<{ issue?: string; impact?: string }>;
+  recommendations?: Array<{ action?: string; why?: string; example?: string }>;
 };
 
 type ThemeEntry = {
@@ -127,6 +130,27 @@ function finalizeThemeEntries(store: Map<string, { label: string; count: number;
     }));
 }
 
+function listFromV2Strengths(strengths: AggregatePayload['strengths']) {
+  return (strengths || [])
+    .map(item => String(item?.title || '').trim())
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
+function listFromV2Weaknesses(weaknesses: AggregatePayload['weaknesses']) {
+  return (weaknesses || [])
+    .map(item => String(item?.issue || '').trim())
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
+function listFromV2Recommendations(recommendations: AggregatePayload['recommendations']) {
+  return (recommendations || [])
+    .map(item => String(item?.action || '').trim())
+    .filter(Boolean)
+    .slice(0, 5);
+}
+
 function strongestSignalLabel(stats: AudienceStats) {
   const signals = [
     { label: 'attention', value: stats.average_attention },
@@ -135,6 +159,10 @@ function strongestSignalLabel(stats: AudienceStats) {
   ].sort((left, right) => right.value - left.value);
 
   return signals[0]?.label || 'attention';
+}
+
+function isMissingColumnError(error: any, columnName: string) {
+  return error?.code === 'PGRST204' && String(error?.message || '').includes(`'${columnName}'`);
 }
 
 export async function GET(req: Request, { params }: { params: Promise<{ userId: string }> }) {
@@ -180,10 +208,23 @@ export async function GET(req: Request, { params }: { params: Promise<{ userId: 
       });
     }
 
-    const { data: simulationResults, error: resultsError } = await supabase
+    let { data: simulationResults, error: resultsError } = await supabase
       .from('simulation_results')
-      .select('simulation_id, aggregate_json, created_at')
+      .select('simulation_id, aggregate_json, prompt_version, created_at')
       .in('simulation_id', simulationIds);
+
+    if (resultsError && isMissingColumnError(resultsError, 'prompt_version')) {
+      const legacyResults = await supabase
+        .from('simulation_results')
+        .select('simulation_id, aggregate_json, created_at')
+        .in('simulation_id', simulationIds);
+
+      simulationResults = (legacyResults.data || []).map(item => ({
+        ...item,
+        prompt_version: 'v1',
+      }));
+      resultsError = legacyResults.error;
+    }
 
     if (resultsError) {
       return NextResponse.json({ error: 'Failed to fetch simulation results' }, { status: 500 });
@@ -232,14 +273,17 @@ export async function GET(req: Request, { params }: { params: Promise<{ userId: 
         const workingThemes = [
           coaching.whats_working_summary,
           ...extractBulletList(coaching.whats_working),
+          ...listFromV2Strengths(aggregate.strengths),
         ];
         const losingThemes = [
           coaching.whats_losing_them_summary,
           ...extractBulletList(coaching.whats_losing_them),
+          ...listFromV2Weaknesses(aggregate.weaknesses),
         ];
         const fixThemes = [
           ...extractBulletList(coaching.edits_to_add),
           ...extractBulletList(coaching.suggested_fix, 1),
+          ...listFromV2Recommendations(aggregate.recommendations),
         ];
 
         workingThemes.forEach(theme => {

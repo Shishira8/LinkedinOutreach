@@ -20,6 +20,20 @@ type CoachingShape = {
   rewritten_post?: string;
 };
 
+type V2Persona = {
+  title?: string;
+  description?: string;
+  likely_reaction?: string;
+  influencing_elements?: string;
+  relationship_to_goals?: string;
+};
+
+type V2Recommendation = {
+  action?: string;
+  why?: string;
+  example?: string;
+};
+
 function formatAudienceLabel(audience: string) {
   return audience.replace(/_/g, ' ');
 }
@@ -47,6 +61,10 @@ function coachingForAudience(aggregate: any): CoachingShape {
   return aggregate?.coaching || {};
 }
 
+function toSafeArray<T>(value: T[] | undefined): T[] {
+  return Array.isArray(value) ? value : [];
+}
+
 export default function ResultsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const [data, setData] = useState<any>(null);
@@ -58,6 +76,8 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
   const [showDetailedEdits, setShowDetailedEdits] = useState(false);
   const [showPerformanceDetails, setShowPerformanceDetails] = useState(false);
   const [showMethodology, setShowMethodology] = useState(false);
+  const [showFullAnalysis, setShowFullAnalysis] = useState(false);
+  const [showV2DeepDive, setShowV2DeepDive] = useState(false);
   const [activePersonaAudience, setActivePersonaAudience] = useState<string | null>(null);
   
   const { isSignedIn, isLoaded } = useSimulationAuth();
@@ -204,7 +224,24 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
   const activeSuggestedFix = toBulletList(activeCoaching?.suggested_fix, 1)[0];
   const activeWorkingSummary = activeCoaching?.whats_working_summary || toBulletList(activeAggregate?.coaching?.whats_working, 1)[0];
   const activeLosingSummary = activeCoaching?.whats_losing_them_summary || toBulletList(activeAggregate?.coaching?.whats_losing_them, 1)[0];
-  const activeRewrite = activeCoaching?.rewritten_post?.trim() || data?.post_text?.trim() || '';
+  const activeRewrite =
+    activeCoaching?.rewritten_post?.trim() ||
+    String(activeAggregate?.revised_post_example?.revised || '').trim() ||
+    data?.post_text?.trim() ||
+    '';
+  const activePromptVersion = String(activeAggregate?.prompt_version || 'v1');
+  const v2Personas = toSafeArray<V2Persona>(activeAggregate?.audience_simulation?.personas);
+  const v2Strengths = toSafeArray<{ title?: string; why?: string }>(activeAggregate?.strengths);
+  const v2Weaknesses = toSafeArray<{ issue?: string; impact?: string }>(activeAggregate?.weaknesses);
+  const v2Recommendations = toSafeArray<V2Recommendation>(activeAggregate?.recommendations);
+  const v2LikelySegments = toSafeArray<string>(activeAggregate?.engagement_prediction?.likely_segments);
+  const v2KeyFactors = toSafeArray<string>(activeAggregate?.engagement_prediction?.key_factors);
+  const v2Analysis = String(activeAggregate?.analysis || '').trim();
+  const v2OriginalExcerpt = String(activeAggregate?.revised_post_example?.original || '').trim();
+  const v2RevisedExcerpt = String(activeAggregate?.revised_post_example?.revised || '').trim();
+  const v2StrengthHighlights = v2Strengths.map(item => item.title || '').filter(Boolean).slice(0, 3);
+  const v2WeaknessHighlights = v2Weaknesses.map(item => item.issue || '').filter(Boolean).slice(0, 3);
+  const v2RecommendationHighlights = v2Recommendations.map(item => item.action || '').filter(Boolean).slice(0, 3);
   const formulaScore = activeAggregate
     ? Math.round(
         (activeAggregate.would_stop_scrolling_pct || 0) * 0.4 +
@@ -470,6 +507,153 @@ export default function ResultsPage({ params }: { params: Promise<{ id: string }
                 </div>
               ) : null}
             </div>
+          </div>
+        ) : null}
+
+        {activeAggregate && activePromptVersion === 'v2' ? (
+          <div className="mb-12 space-y-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <h2 className="text-2xl font-heading font-bold tracking-tight mb-1">Audience Simulation Breakdown</h2>
+                <p className="text-sm text-[#94A3B8]">Compact highlights are shown first. Expand full report only when needed.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowV2DeepDive(prev => !prev)}
+                className={defiButtonVariants({ variant: 'outline', size: 'sm' })}
+              >
+                {showV2DeepDive ? 'Hide full report' : 'Show full report'}
+                {showV2DeepDive ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <DefiPanel variant="surface" padding="md" className="rounded-2xl">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">Predicted engagement</div>
+                <p className="text-sm text-white mt-2">
+                  {activeAggregate?.engagement_prediction?.estimated_engagement_rate || 'Not generated'}
+                </p>
+                <p className="text-xs text-[#94A3B8] mt-2">{activeAggregate?.engagement_prediction?.potential_reach || 'Potential reach was not generated.'}</p>
+              </DefiPanel>
+
+              <DefiPanel variant="surface" padding="md" className="rounded-2xl">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">Most likely segments</div>
+                <ul className="mt-2 space-y-1 text-sm text-[#CBD5E1]">
+                  {v2LikelySegments.length > 0 ? v2LikelySegments.slice(0, 3).map(item => <li key={item}>- {item}</li>) : <li>No segment breakdown available.</li>}
+                </ul>
+              </DefiPanel>
+
+              <DefiPanel variant="surface" padding="md" className="rounded-2xl">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">Top strengths</div>
+                <ul className="mt-2 space-y-1 text-sm text-[#CBD5E1]">
+                  {v2StrengthHighlights.length > 0 ? v2StrengthHighlights.map(item => <li key={item}>- {item}</li>) : <li>No strengths section was generated.</li>}
+                </ul>
+              </DefiPanel>
+
+              <DefiPanel variant="surface" padding="md" className="rounded-2xl">
+                <div className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">Top risks</div>
+                <ul className="mt-2 space-y-1 text-sm text-[#CBD5E1]">
+                  {v2WeaknessHighlights.length > 0 ? v2WeaknessHighlights.map(item => <li key={item}>- {item}</li>) : <li>No weaknesses section was generated.</li>}
+                </ul>
+              </DefiPanel>
+            </div>
+
+            <DefiPanel variant="surface" padding="md" className="rounded-2xl">
+              <div className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">Top recommendations</div>
+              <ol className="mt-3 space-y-2 text-sm text-[#CBD5E1] list-decimal pl-5">
+                {v2RecommendationHighlights.length > 0 ? v2RecommendationHighlights.map((action, index) => (
+                  <li key={`${action}-${index}`}>
+                    <div className="font-semibold text-white">{action}</div>
+                  </li>
+                )) : <li>No recommendations section was generated.</li>}
+              </ol>
+            </DefiPanel>
+
+            {showV2DeepDive ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <DefiPanel variant="surface" padding="md" className="rounded-2xl">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">Engagement factors</div>
+                    <ul className="mt-2 space-y-2 text-sm text-[#CBD5E1]">
+                      {v2KeyFactors.length > 0 ? v2KeyFactors.map(item => (
+                        <li key={item} className="flex gap-2">
+                          <span className="mt-1 h-1.5 w-1.5 rounded-full bg-cyan-500" />
+                          <span>{item}</span>
+                        </li>
+                      )) : <li>No factor analysis available.</li>}
+                    </ul>
+                  </DefiPanel>
+
+                  <DefiPanel variant="surface" padding="md" className="rounded-2xl">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">Detailed recommendations</div>
+                    <ol className="mt-3 space-y-3 text-sm text-[#CBD5E1] list-decimal pl-5">
+                      {v2Recommendations.length > 0 ? v2Recommendations.map((item, index) => (
+                        <li key={`${item.action}-${index}`}>
+                          <div className="font-semibold text-white">{item.action || 'Recommendation'}</div>
+                          {item.why ? <div className="text-[#94A3B8] mt-1">Why: {item.why}</div> : null}
+                          {item.example ? <div className="text-[#94A3B8] mt-1">Example: {item.example}</div> : null}
+                        </li>
+                      )) : <li>No recommendations section was generated.</li>}
+                    </ol>
+                  </DefiPanel>
+                </div>
+
+                {v2Personas.length > 0 ? (
+                  <DefiPanel variant="surface" padding="md" className="rounded-2xl">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">Persona reactions from target audience</div>
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {v2Personas.map((persona, index) => (
+                        <div key={`${persona.title}-${index}`} className="rounded-xl border border-white/10 bg-black/25 p-4">
+                          <div className="font-semibold text-white">{persona.title || `Persona ${index + 1}`}</div>
+                          {persona.description ? <p className="text-sm text-[#CBD5E1] mt-2">{persona.description}</p> : null}
+                          {persona.likely_reaction ? <p className="text-xs text-[#94A3B8] mt-2"><span className="font-semibold">Likely reaction:</span> {persona.likely_reaction}</p> : null}
+                          {persona.influencing_elements ? <p className="text-xs text-[#94A3B8] mt-1"><span className="font-semibold">Influencing elements:</span> {persona.influencing_elements}</p> : null}
+                          {persona.relationship_to_goals ? <p className="text-xs text-[#94A3B8] mt-1"><span className="font-semibold">Relationship to goals:</span> {persona.relationship_to_goals}</p> : null}
+                        </div>
+                      ))}
+                    </div>
+                  </DefiPanel>
+                ) : null}
+
+                {(v2OriginalExcerpt || v2RevisedExcerpt) ? (
+                  <DefiPanel variant="surface" padding="md" className="rounded-2xl">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">Revised post example</div>
+                    {v2OriginalExcerpt ? (
+                      <div className="mt-3">
+                        <div className="text-xs font-semibold text-[#94A3B8] uppercase">Original excerpt</div>
+                        <p className="mt-1 text-sm text-[#CBD5E1] whitespace-pre-wrap">{v2OriginalExcerpt}</p>
+                      </div>
+                    ) : null}
+                    {v2RevisedExcerpt ? (
+                      <div className="mt-4">
+                        <div className="text-xs font-semibold text-[#94A3B8] uppercase">Revised excerpt</div>
+                        <p className="mt-1 text-sm text-white whitespace-pre-wrap">{v2RevisedExcerpt}</p>
+                      </div>
+                    ) : null}
+                  </DefiPanel>
+                ) : null}
+
+                {v2Analysis ? (
+                  <DefiPanel variant="surface" padding="md" className="rounded-2xl">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-xs font-semibold uppercase tracking-wider text-[#94A3B8]">Detailed analysis (stored, hidden by default)</div>
+                      <button
+                        type="button"
+                        onClick={() => setShowFullAnalysis(prev => !prev)}
+                        className={defiButtonVariants({ variant: 'outline', size: 'sm' })}
+                      >
+                        {showFullAnalysis ? 'Hide analysis' : 'Show analysis'}
+                      </button>
+                    </div>
+                    {showFullAnalysis ? (
+                      <pre className="mt-4 whitespace-pre-wrap text-xs text-[#CBD5E1] bg-black/25 p-4 rounded-xl border border-white/10">
+                        {v2Analysis}
+                      </pre>
+                    ) : null}
+                  </DefiPanel>
+                ) : null}
+              </>
+            ) : null}
           </div>
         ) : null}
 

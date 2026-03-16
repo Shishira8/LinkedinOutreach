@@ -201,6 +201,9 @@ export default function DashboardPage() {
         <div className="defi-container py-6 flex justify-between items-center">
         <Link href="/" className="text-xl defi-logo">ReplyMind</Link>
         <div className="flex items-center gap-5 font-mono">
+          <Link href="/profile" className="text-sm font-medium defi-link uppercase tracking-wider">
+            Profile
+          </Link>
           <Link href="/simulate" className="text-sm font-medium defi-link uppercase tracking-wider">
             New simulation
           </Link>

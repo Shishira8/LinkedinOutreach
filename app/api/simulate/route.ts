@@ -2,14 +2,19 @@ import { NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { createHash } from 'crypto';
 import { getPersonas } from '@/lib/personas';
-import { generateReaction, aggregateReactions } from '@/lib/gemini';
+import { generateReaction, aggregateReactions, aggregateReactionsV2 } from '@/lib/gemini';
 import { normalizeAudienceAggregates } from '@/lib/scoring';
 import { type AudienceProfile } from '@/lib/linkedin-analytics';
+import { type UserBrandProfile } from '@/lib/simulation-v2';
 import { v4 as uuidv4 } from 'uuid';
 import { getServiceSupabase } from '@/lib/supabase';
 
 const ANONYMOUS_SIMULATION_LIMIT = 1;
 const ANONYMOUS_WINDOW_HOURS = 24;
+
+function isMissingColumnError(error: any, columnName: string) {
+  return error?.code === 'PGRST204' && String(error?.message || '').includes(`'${columnName}'`);
+}
 
 function getAnonymousIdentityHash(req: Request) {
   const forwardedFor = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
@@ -84,9 +89,11 @@ export async function POST(req: Request) {
 
     const simulationId = uuidv4();
     const supabase = getServiceSupabase();
+    const simulationPromptVersion = process.env.SIMULATION_PROMPT_VERSION || 'v2';
     let audienceProfile: AudienceProfile | null = null;
     let latestImportId: string | null = null;
     let cachedPersonaPack: Record<string, any[]> | null = null;
+    let userProfile: UserBrandProfile | null = null;
 
     if (!userId) {
       try {
@@ -95,6 +102,21 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: quotaError.message }, { status: 429 });
       }
     } else {
+      const { data: profileData, error: profileError } = await supabase
+        .from('user_brand_profiles')
+        .select('*')
+        .eq('clerk_user_id', userId)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Error loading user profile', profileError);
+      } else if (profileData) {
+        userProfile = {
+          ...(profileData as Record<string, any>),
+          current_role: (profileData as Record<string, any>).current_role || (profileData as Record<string, any>).current_job_role || '',
+        } as UserBrandProfile;
+      }
+
       const { data: latestImport, error: importError } = await supabase
         .from('linkedin_audience_imports')
         .select('id, audience_profile_json')
@@ -208,18 +230,40 @@ export async function POST(req: Request) {
           sendEvent('progress', { message: 'Rewriting your post for each audience...', step: 3 });
 
           // Aggregate reactions
-          const llmAggregate = await aggregateReactions(reactionsByAudience, post_text);
+          const llmAggregate = simulationPromptVersion === 'v2'
+            ? await aggregateReactionsV2(reactionsByAudience, post_text, {
+                audienceProfile,
+                userProfile,
+                personasByAudience,
+              })
+            : await aggregateReactions(reactionsByAudience, post_text);
           const aggregate = normalizeAudienceAggregates(reactionsByAudience, llmAggregate);
 
           sendEvent('progress', { message: 'Finalizing your coaching report...', step: 4 });
 
           // Save results
-          const { error: resultError } = await supabase.from('simulation_results').insert({
+          let { error: resultError } = await supabase.from('simulation_results').insert({
             simulation_id: simulationId,
             personas_json: personasByAudience,
             reactions_json: reactionsByAudience,
             aggregate_json: aggregate,
+            prompt_version: simulationPromptVersion,
+            report_v2_json: simulationPromptVersion === 'v2' ? llmAggregate : null,
           });
+
+          if (resultError && (
+            isMissingColumnError(resultError, 'prompt_version') ||
+            isMissingColumnError(resultError, 'report_v2_json')
+          )) {
+            const legacyInsert = await supabase.from('simulation_results').insert({
+              simulation_id: simulationId,
+              personas_json: personasByAudience,
+              reactions_json: reactionsByAudience,
+              aggregate_json: aggregate,
+            });
+
+            resultError = legacyInsert.error;
+          }
 
           if (resultError) {
             console.error('Error saving results', resultError);
@@ -228,7 +272,13 @@ export async function POST(req: Request) {
           // Update simulation status
           await supabase.from('simulations').update({ status: 'complete' }).eq('id', simulationId);
 
-          sendEvent('complete', { id: simulationId, personas: personasByAudience, reactions: reactionsByAudience, aggregate });
+          sendEvent('complete', {
+            id: simulationId,
+            prompt_version: simulationPromptVersion,
+            personas: personasByAudience,
+            reactions: reactionsByAudience,
+            aggregate,
+          });
           controller.close();
         } catch (err) {
           console.error('Stream error:', err);
