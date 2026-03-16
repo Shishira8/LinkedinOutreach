@@ -45,6 +45,11 @@ export default function LoadingPage() {
             // Ignore JSON parsing issues and use the default message.
           }
 
+          if (response.status === 401) {
+            router.push('/sign-in?redirect_url=/simulate');
+            return;
+          }
+
           throw new Error(message);
         }
 

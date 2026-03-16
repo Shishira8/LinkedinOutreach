@@ -42,6 +42,13 @@ type UserProfileResponse = {
   } | null;
 };
 
+type SimulationQuotaResponse = {
+  limit: number;
+  used: number;
+  remaining: number;
+  isSignedIn: boolean;
+};
+
 export default function SimulatePage() {
   const [postText, setPostText] = useState('');
   const [audiences, setAudiences] = useState({
@@ -63,6 +70,8 @@ export default function SimulatePage() {
   const [profileLoadNotice, setProfileLoadNotice] = useState<string | null>(null);
   const [isUploadingAnalytics, setIsUploadingAnalytics] = useState(false);
   const [showOptionalImport, setShowOptionalImport] = useState(false);
+  const [quota, setQuota] = useState<SimulationQuotaResponse | null>(null);
+  const [quotaNotice, setQuotaNotice] = useState<string | null>(null);
   const router = useRouter();
 
   const handleAudienceChange = (key: keyof typeof audiences) => {
@@ -75,15 +84,22 @@ export default function SimulatePage() {
   const { isLoaded, isSignedIn } = useSimulationAuth();
 
   useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.replace('/sign-in?redirect_url=/simulate');
+    }
+  }, [isLoaded, isSignedIn, router]);
+
+  useEffect(() => {
     if (!isLoaded || !isSignedIn) {
       return;
     }
 
     const loadLatestAnalyticsImport = async () => {
       try {
-        const [analyticsResponse, profileResponse] = await Promise.all([
+        const [analyticsResponse, profileResponse, quotaResponse] = await Promise.all([
           fetch('/api/linkedin-analytics'),
           fetch('/api/user-profile'),
+          fetch('/api/simulate/quota'),
         ]);
 
         if (!profileResponse.ok) {
@@ -99,6 +115,14 @@ export default function SimulatePage() {
           ),
         );
         setProfileReady(hasProfileContext);
+
+        if (quotaResponse.ok) {
+          const quotaPayload: SimulationQuotaResponse = await quotaResponse.json();
+          setQuota(quotaPayload);
+          setQuotaNotice(null);
+        } else {
+          setQuotaNotice('Failed to load your remaining message creator credits.');
+        }
 
         if (!analyticsResponse.ok) {
           throw new Error('Failed to load your latest LinkedIn audience import.');
@@ -185,6 +209,22 @@ export default function SimulatePage() {
   };
 
   const formatTopLabels = (entries: Array<{ label: string }> = []) => entries.map(entry => entry.label).join(', ');
+
+  if (!isLoaded || !isSignedIn) {
+    return (
+      <div className="defi-page flex items-center justify-center px-4">
+        <DefiPanel className="w-full max-w-md text-center" variant="surface" padding="lg">
+          <h1 className="text-2xl font-heading font-bold text-white">Sign in to create simulations</h1>
+          <p className="mt-3 text-sm text-[#94A3B8]">Every simulation is now tied to your account so usage and results stay fully tracked.</p>
+          <div className="mt-6">
+            <Link href="/sign-in?redirect_url=/simulate" className={defiButtonVariants()}>
+              Sign in
+            </Link>
+          </div>
+        </DefiPanel>
+      </div>
+    );
+  }
 
   return (
     <div className="defi-page">
@@ -367,6 +407,22 @@ export default function SimulatePage() {
             {/* Text Area */}
             <DefiPanel className="xl:col-span-2" variant="surface" padding="md">
               <label className="block text-sm font-semibold text-white mb-2">LinkedIn Post Draft</label>
+              {isSignedIn && quota ? (
+                <div className={`mb-3 rounded-xl border p-3 text-sm ${
+                  quota.remaining === 0
+                    ? 'border-red-400/40 bg-red-500/10 text-red-300'
+                    : 'border-amber-400/35 bg-amber-500/10 text-amber-200'
+                }`}>
+                  {quota.remaining > 0
+                    ? `${quota.remaining} of ${quota.limit} message creator credits remaining.`
+                    : 'You have used all 5 message creator credits. Message creator for more credits.'}
+                </div>
+              ) : null}
+              {isSignedIn && quotaNotice ? (
+                <div className="mb-3 rounded-xl border border-amber-400/35 bg-amber-500/10 p-3 text-sm text-amber-200">
+                  {quotaNotice}
+                </div>
+              ) : null}
               <textarea
                 className="w-full h-72 p-4 bg-black/40 border border-white/15 rounded-xl focus:ring-2 focus:ring-[#F7931A] focus:border-[#F7931A] text-white outline-none resize-none transition-all placeholder:text-[#64748B]"
                 placeholder="Paste your LinkedIn post draft here..."
@@ -428,7 +484,7 @@ export default function SimulatePage() {
           <div className="flex justify-stretch sm:justify-end">
             <button
               onClick={handleSimulate}
-              disabled={!isValid || isSimulating}
+              disabled={!isValid || isSimulating || Boolean(isSignedIn && quota && quota.remaining === 0)}
               className={`${defiButtonVariants({ size: 'lg' })} w-full sm:w-auto`}
             >
               {isSimulating ? (

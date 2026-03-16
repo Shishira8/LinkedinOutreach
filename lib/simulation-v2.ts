@@ -152,6 +152,17 @@ function parseLabeledLine(block: string, label: string): string {
   return cleanText(match?.[1] || '');
 }
 
+function parseFirstMatchingLabeledLine(block: string, labels: string[]): string {
+  for (const label of labels) {
+    const parsed = parseLabeledLine(block, label);
+    if (parsed) {
+      return parsed;
+    }
+  }
+
+  return '';
+}
+
 function parsePersonaBlocks(block: string): AudienceSimulationPersona[] {
   const matches = block.matchAll(/Persona\s*\d+\s*:\s*(.+?)\n([\s\S]*?)(?=\n\s*Persona\s*\d+\s*:|$)/gi);
   const personas: AudienceSimulationPersona[] = [];
@@ -279,8 +290,12 @@ function parseRevisedPostExample(block: string): RevisedPostExample {
 
 function fallbackTagBlock(rawText: string, title: string): string {
   const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const regex = new RegExp(`${escaped}[\\s\\S]*?(?=\\n\s*(?:[A-Z][A-Za-z ]{2,40}|<|$))`, 'i');
-  return rawText.match(regex)?.[0]?.trim() || '';
+  const regex = new RegExp(`${escaped}[\\s\\S]*?(?=\\n\\s*(?:[A-Z][A-Za-z ]{2,40}:?|<|$))`, 'i');
+  const fullMatch = rawText.match(regex)?.[0] || '';
+
+  return fullMatch
+    .replace(new RegExp(`^${escaped}\\s*:?\s*`, 'i'), '')
+    .trim();
 }
 
 export function parseSimulationReportV2(rawText: string): SimulationReportV2 {
@@ -305,10 +320,26 @@ export function parseSimulationReportV2(rawText: string): SimulationReportV2 {
       raw: audienceSimulation,
     },
     engagement_prediction: {
-      estimated_engagement_rate: parseLabeledLine(engagementPrediction, 'Estimated engagement rate') || '',
-      likely_segments: uniqueByNormalized(parseDelimitedList(parseLabeledLine(engagementPrediction, 'Most likely to engage'))),
-      potential_reach: parseLabeledLine(engagementPrediction, 'Potential reach') || '',
-      key_factors: uniqueByNormalized(parseDelimitedList(parseLabeledLine(engagementPrediction, 'Key factors'))),
+      estimated_engagement_rate: parseFirstMatchingLabeledLine(engagementPrediction, [
+        'Estimated engagement rate',
+        'Engagement rate range',
+        'Estimated engagement',
+      ]) || '',
+      likely_segments: uniqueByNormalized(parseDelimitedList(parseFirstMatchingLabeledLine(engagementPrediction, [
+        'Most likely to engage',
+        'Likely segments',
+        'Audience segments most likely to engage',
+        'Which audience segments are most likely to engage',
+      ]))),
+      potential_reach: parseFirstMatchingLabeledLine(engagementPrediction, [
+        'Potential reach',
+        'Potential reach beyond immediate network',
+      ]) || '',
+      key_factors: uniqueByNormalized(parseDelimitedList(parseFirstMatchingLabeledLine(engagementPrediction, [
+        'Key factors',
+        'Factors that would increase or decrease engagement',
+        'Factors',
+      ]))),
       raw: engagementPrediction,
     },
     strengths,

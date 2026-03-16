@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServiceSupabase } from '@/lib/supabase';
 import { auth } from '@clerk/nextjs/server';
+import { ensureAppUserRecord } from '@/lib/app-user';
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -11,11 +12,15 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     const { id } = await params;
     const supabase = getServiceSupabase();
+    const appUser = await ensureAppUserRecord(userId);
     
     // Claim the simulation if it currently has no owner
     const { error } = await supabase
       .from('simulations')
-      .update({ clerk_user_id: userId })
+      .update({
+        clerk_user_id: userId,
+        user_id: appUser.id,
+      })
       .eq('id', id)
       .is('clerk_user_id', null);
 
